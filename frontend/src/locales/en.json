@@ -1,0 +1,86 @@
+{
+  "brand": {
+    "kicker": "Cue",
+    "name": "Don't learn it. Cue it."
+  },
+  "nav": {
+    "home": "Back home",
+    "back": "Go back",
+    "language": "中文"
+  },
+  "steps": {
+    "home": "Input",
+    "prep": "Prep",
+    "stage": "Stage",
+    "review": "Review"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "home": {
+    "eyebrow": "Instant capture",
+    "title": "Turn messy thoughts into English cues.",
+    "subtitle": "Speak, type, drop fragments, or snap the task. Cue figures out what you want to say first.",
+    "micLabel": "Voice input",
+    "micIdle": "Talk",
+    "micActive": "Live",
+    "inputLabel": "Your idea",
+    "inputPlaceholder": "Example: Tomorrow I need to explain the Industrial Revolution. I want to say production got faster, but pollution and worker issues got worse.",
+    "defaultThought": "I need to prepare a school speaking task. Help me build clear English cues.",
+    "speechUnsupported": "Speech input is not available in this browser. Typing still works.",
+    "speechError": "That did not come through. Try again or type it.",
+    "cameraError": "Camera access failed. You can upload an image instead.",
+    "cameraImageName": "Camera capture",
+    "imageAlt": "Selected upload",
+    "imageReady": "Image ready for analysis",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "submit": "Analyze",
+    "cameraTitle": "Capture the task",
+    "snap": "Use this shot"
+  },
+  "prep": {
+    "eyebrow": "Prep room",
+    "title": "Build the frame before you speak.",
+    "seconds": "sec",
+    "thoughtPlaceholder": "Add more native-language thoughts. Cue will rebuild the English cards.",
+    "addTime": "30s",
+    "regenerate": "Regenerate",
+    "generating": "Generating",
+    "ready": "I'm Ready",
+    "loading": "AI is analyzing your intent...",
+    "streamError": "Cue generation failed. The backend may not be running.",
+    "previewError": "Real TTS failed. Check Google Cloud credentials.",
+    "audioPlayError": "Audio playback failed. Tap Preview again or check browser sound permissions.",
+    "preview": "Preview"
+  },
+  "stage": {
+    "eyebrow": "Attempt {{attempt}}",
+    "title": "Conversation Mode",
+    "defaultPrompt": "Cue is listening. Finish at your own pace.",
+    "assist": "Assist",
+    "readyStatus": "Start when ready",
+    "listeningStatus": "Listening until you finish",
+    "processingStatus": "Transcribing",
+    "processingButton": "Processing",
+    "start": "Start answer",
+    "finish": "I finished",
+    "micError": "Microphone access failed. Allow browser microphone permission.",
+    "sttError": "Real STT failed. Check the audio or Google Cloud permissions."
+  },
+  "review": {
+    "eyebrow": "Backstage",
+    "title": "Perfect You",
+    "loading": "Generating your native-level double...",
+    "metrics": {
+      "fluency": "Fluency",
+      "vocabulary": "Vocabulary",
+      "pronunciation": "Pronunciation"
+    },
+    "clunky": "What you said",
+    "native": "How a native would say your ideas",
+    "error": "Real review API failed. Check Gemini or TTS settings.",
+    "playPerfect": "▶ How a Native would say YOUR ideas",
+    "takeTwo": "🎬 Take 2"
+  }
+}

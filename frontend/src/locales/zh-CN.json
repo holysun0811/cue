@@ -1,0 +1,86 @@
+{
+  "brand": {
+    "kicker": "Cue",
+    "name": "Don't learn it. Cue it."
+  },
+  "nav": {
+    "home": "回到首页",
+    "back": "返回上一页",
+    "language": "EN"
+  },
+  "steps": {
+    "home": "输入",
+    "prep": "备战",
+    "stage": "登台",
+    "review": "复盘"
+  },
+  "common": {
+    "close": "关闭"
+  },
+  "home": {
+    "eyebrow": "极速触达",
+    "title": "把脑子里的散点变成英文提词。",
+    "subtitle": "用中文、英语碎片、语音，或者直接拍题目。Cue 会先理解你要表达什么。",
+    "micLabel": "语音输入",
+    "micIdle": "说",
+    "micActive": "听",
+    "inputLabel": "你的想法",
+    "inputPlaceholder": "例如：明天历史课要讲工业革命的影响，我想说它让生产更快但也带来污染和工人问题。",
+    "defaultThought": "我需要准备一个学校英语口语表达，请帮我搭出清晰提词。",
+    "speechUnsupported": "这个浏览器暂时不支持语音转文字，可以直接打字。",
+    "speechError": "没有听清，再试一次或直接输入。",
+    "cameraError": "无法打开摄像头，可以改用上传图片。",
+    "cameraImageName": "摄像头截图",
+    "imageAlt": "已选择的图片",
+    "imageReady": "图片已加入分析",
+    "camera": "相机",
+    "gallery": "图库",
+    "submit": "分析",
+    "cameraTitle": "拍下题目",
+    "snap": "使用这张"
+  },
+  "prep": {
+    "eyebrow": "双语备战室",
+    "title": "先搭骨架，再开口。",
+    "seconds": "秒",
+    "thoughtPlaceholder": "继续补充你的中文思路，Cue 会重建英文提词卡。",
+    "addTime": "30s",
+    "regenerate": "重新生成",
+    "generating": "生成中",
+    "ready": "I'm Ready",
+    "loading": "AI 正在分析你的意图...",
+    "streamError": "提词生成失败，后端可能还没启动。",
+    "previewError": "真实 TTS 调用失败，请检查 Google Cloud 凭证。",
+    "audioPlayError": "音频播放失败，请再点一次 Preview 或检查浏览器声音权限。",
+    "preview": "Preview"
+  },
+  "stage": {
+    "eyebrow": "第 {{attempt}} 轮",
+    "title": "Conversation Mode",
+    "defaultPrompt": "Cue 正在听。按自己的节奏说完，不会被打断。",
+    "assist": "Assist",
+    "readyStatus": "准备好就开始",
+    "listeningStatus": "正在听你说完",
+    "processingStatus": "正在转写",
+    "processingButton": "处理中",
+    "start": "开始回答",
+    "finish": "我说完了",
+    "micError": "无法访问麦克风，请允许浏览器麦克风权限。",
+    "sttError": "真实 STT 调用失败，请检查音频或 Google Cloud 权限。"
+  },
+  "review": {
+    "eyebrow": "Backstage",
+    "title": "Perfect You",
+    "loading": "正在生成你的英语分身...",
+    "metrics": {
+      "fluency": "流利度",
+      "vocabulary": "词汇",
+      "pronunciation": "发音"
+    },
+    "clunky": "你刚才的表达",
+    "native": "母语者会这样说你的想法",
+    "error": "真实复盘 API 调用失败，请检查 Gemini 或 TTS 配置。",
+    "playPerfect": "▶ How a Native would say YOUR ideas",
+    "takeTwo": "🎬 Take 2"
+  }
+}
