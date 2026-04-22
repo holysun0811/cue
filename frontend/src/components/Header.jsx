@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, Sparkles } from 'lucide-react';
 
-export default function Header({ onBack, step }) {
+export default function Header({ onBack, rightSlot, step }) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -81,7 +81,11 @@ export default function Header({ onBack, step }) {
           >
             {title}
           </motion.h1>
-          <div aria-hidden="true" className="h-10 w-10" />
+          {rightSlot ? (
+            <div className="flex justify-end">{rightSlot}</div>
+          ) : (
+            <div aria-hidden="true" className="h-10 w-10" />
+          )}
         </>
       )}
     </header>

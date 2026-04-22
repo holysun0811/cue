@@ -1,4 +1,4 @@
-import { mockBridge, mockExaminerPrompt, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
+import { mockBridge, mockExaminerFollowUp, mockExaminerPrompt, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockPracticeHintData, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
 
 function hasGeminiKey() {
   return Boolean(process.env.GEMINI_API_KEY);
@@ -413,6 +413,185 @@ Rules:
   }
 }
 
+function buildExaminerFollowUpPrompt({
+  promptSummary = '',
+  targetLanguage = 'en',
+  speakingPlan = [],
+  conversationMessages = [],
+  lastUserTranscript = '',
+  userTurnCount = 1
+}) {
+  const conversation = conversationMessages
+    .map((message) => {
+      const content = message.transcript || message.text || '';
+      if (!content) return null;
+      return `${message.role}: ${content}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  return `
+You are a spoken-language examiner / teacher.
+You are conducting a realistic oral practice conversation.
+Your job is to keep the learner speaking in the target language.
+
+Original practice prompt:
+${promptSummary}
+
+Practice language:
+${targetLanguage}
+
+Speaking plan for context only:
+${JSON.stringify(speakingPlan)}
+
+Conversation so far:
+${conversation || '(no visible conversation yet)'}
+
+Learner's latest answer:
+${lastUserTranscript || '(empty or unclear answer)'}
+
+User answer count so far: ${userTurnCount}
+
+Return strict JSON:
+{
+  "examinerReplyText": "one natural spoken follow-up question in the practice language"
+}
+
+Rules:
+- Always reply in the practice language / target language.
+- Sound like a real oral examiner or teacher.
+- Keep it natural, concise, and spoken.
+- Ask only one question at a time.
+- Do not give long explanations.
+- Do not provide the full answer directly.
+- Do not give review feedback during the practice chat.
+- Do not repeat the original prompt verbatim.
+- Do not end the practice automatically; the learner decides when to finish.
+- Do not produce visible labels, bullets, numbered lists, or JSON-like language inside examinerReplyText.
+- If the latest answer is weak or very short, ask a simpler follow-up.
+- If the latest answer is already relevant, ask a deeper follow-up.
+- Choose one useful move: ask for an example, clarification, another point of view, cause/effect, consequence, future impact, or comparison.
+- If the learner has already made several relevant points, you may ask a light wrap-up question, but do not force the session to end.
+`;
+}
+
+export async function generateExaminerFollowUp(payload = {}) {
+  const { targetLanguage = 'en', userTurnCount = 1 } = payload;
+
+  if (!hasGeminiKey()) {
+    return mockExaminerFollowUp({ targetLanguage, userTurnCount });
+  }
+
+  try {
+    const parsed = await generateJson(buildExaminerFollowUpPrompt(payload));
+    return parsed.examinerReplyText || mockExaminerFollowUp({ targetLanguage, userTurnCount });
+  } catch {
+    return mockExaminerFollowUp({ targetLanguage, userTurnCount });
+  }
+}
+
+function keywordAppearsInPhrases(keyword = '', phrases = []) {
+  const normalizedKeyword = keyword.trim().toLowerCase();
+  if (!normalizedKeyword) return false;
+  return phrases.some((phrase) => phrase.toLowerCase().includes(normalizedKeyword));
+}
+
+function normalizePracticeHintData(rawHintData = {}, fallbackHintData) {
+  const phrases = (rawHintData.phrases || [])
+    .filter((phrase) => typeof phrase === 'string' && phrase.trim())
+    .map((phrase) => phrase.trim())
+    .slice(0, 2);
+  const keywords = (rawHintData.keywords || [])
+    .filter((keyword) => typeof keyword === 'string' && keyword.trim())
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keywordAppearsInPhrases(keyword, phrases))
+    .slice(0, 4);
+
+  if (!phrases.length || !keywords.length) return fallbackHintData;
+
+  return {
+    scale: {
+      supportedLevels: ['none', 'keywords', 'outline', 'strong_support'],
+      defaultLevel: 'strong_support'
+    },
+    phrases,
+    keywords
+  };
+}
+
+function buildPracticeHintPrompt({
+  targetLanguage = 'en',
+  promptSummary = '',
+  examinerQuestion = '',
+  lastUserTranscript = '',
+  speakingPlan = [],
+  conversationMessages = []
+}) {
+  const conversation = conversationMessages
+    .map((message) => {
+      const content = message.transcript || message.text || '';
+      if (!content) return null;
+      return `${message.role}: ${content}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  return `
+You are Cue's speaking hint generator for a mobile oral-practice chat.
+The learner has just received a new examiner follow-up question. Generate a tiny phrase hint for the learner's NEXT answer.
+
+Practice language:
+${targetLanguage}
+
+Original prompt:
+${promptSummary}
+
+New examiner question:
+${examinerQuestion}
+
+Learner's previous answer:
+${lastUserTranscript || '(empty or unclear answer)'}
+
+Conversation context:
+${conversation || '(none)'}
+
+Speaking plan for context only:
+${JSON.stringify(speakingPlan)}
+
+Return strict JSON:
+{
+  "phrases": ["one short phrase/sentence the learner can borrow", "optional second short phrase/sentence"],
+  "keywords": ["keyword or key phrase 1", "keyword or key phrase 2"]
+}
+
+Rules:
+- Use the practice language only.
+- Generate 1 or 2 short, speakable phrases. Do not generate an outline or explanation.
+- Each phrase should help answer the NEW examiner question, not the previous prompt verbatim.
+- Generate 2 to 4 keywords/key phrases.
+- Every keyword must appear verbatim inside at least one phrase so the UI can highlight it.
+- Keep highlighting targets meaningful: concepts, noun phrases, or reusable spoken expressions.
+- Do not highlight entire sentences.
+- Do not output labels, bullets, translations, or app-language coaching.
+`;
+}
+
+export async function generatePracticeHintData(payload = {}) {
+  const { targetLanguage = 'en', userTurnCount = 1 } = payload;
+  const fallback = mockPracticeHintData({ targetLanguage, userTurnCount });
+
+  if (!hasGeminiKey()) {
+    return fallback;
+  }
+
+  try {
+    const parsed = await generateJson(buildPracticeHintPrompt(payload));
+    return normalizePracticeHintData(parsed, fallback);
+  } catch {
+    return fallback;
+  }
+}
+
 export async function generateSampleAnswer(payload = {}) {
   const {
     promptSummary = '',
@@ -643,10 +822,32 @@ Rules:
 }
 
 export async function generateActionableReview(payload = {}) {
-  const { taskType = 'answer_prompt', promptSummary = '', appLanguage = 'zh-CN', targetLanguage = 'en', speakingPlan = [], transcript = '', round = 1 } = payload;
+  const {
+    taskType = 'answer_prompt',
+    promptSummary = '',
+    appLanguage = 'zh-CN',
+    targetLanguage = 'en',
+    speakingPlan = [],
+    transcript = '',
+    conversationMessages = [],
+    round = 1
+  } = payload;
+  const conversationText = conversationMessages
+    .map((message) => {
+      const content = message.transcript || message.text || '';
+      if (!content) return null;
+      return `${message.role}: ${content}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+  const reviewTranscript = transcript || conversationMessages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.transcript || message.text || '')
+    .filter(Boolean)
+    .join('\n');
 
   if (!hasGeminiKey()) {
-    return mockReview({ appLanguage, targetLanguage, transcript });
+    return mockReview({ appLanguage, targetLanguage, transcript: reviewTranscript });
   }
 
   const prompt = `
@@ -659,7 +860,11 @@ App language: ${appLanguage}
 Target language: ${targetLanguage}
 Round: ${round}
 Speaking plan: ${JSON.stringify(speakingPlan)}
-Transcript: ${transcript}
+Full practice conversation:
+${conversationText || '(not provided)'}
+
+Learner answers transcript:
+${reviewTranscript}
 
 Return strict JSON:
 {
@@ -687,7 +892,7 @@ Rules:
 
   try {
     const parsed = await generateJson(prompt);
-    const mock = mockReview({ appLanguage, targetLanguage, transcript });
+    const mock = mockReview({ appLanguage, targetLanguage, transcript: reviewTranscript });
     const topIssues = Array.isArray(parsed.topIssues) && parsed.topIssues.length === 3 ? parsed.topIssues : mock.topIssues;
     return {
       ...mock,
@@ -695,6 +900,6 @@ Rules:
       topIssues
     };
   } catch {
-    return mockReview({ appLanguage, targetLanguage, transcript });
+    return mockReview({ appLanguage, targetLanguage, transcript: reviewTranscript });
   }
 }

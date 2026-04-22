@@ -74,6 +74,7 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
           targetLanguage: session.targetLanguage,
           speakingPlan: session.speakingPlan,
           transcript: session.latestAttempt.transcript,
+          conversationMessages: session.latestAttempt.conversationMessages || session.conversationMessages || [],
           round: session.round
         });
 

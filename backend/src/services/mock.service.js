@@ -441,6 +441,151 @@ export function mockExaminerPrompt({ promptSummary = '', targetLanguage = 'en' }
   return copy[languageKey(targetLanguage)] || copy.en;
 }
 
+export function mockExaminerFollowUp({ targetLanguage = 'en', userTurnCount = 1 } = {}) {
+  const index = Math.max(0, userTurnCount - 1);
+  const copy = {
+    en: [
+      'Can you give me one specific example to support that?',
+      'What is another side of this issue that we should consider?',
+      'Why do you think that point matters in real life?',
+      'How might this affect people in the future?'
+    ],
+    'zh-CN': [
+      '你能举一个具体例子来支持这个观点吗？',
+      '这个问题还有另一面值得考虑吗？',
+      '你为什么觉得这一点在现实生活中重要？',
+      '它未来可能会怎样影响人们？'
+    ],
+    fr: [
+      'Peux-tu donner un exemple precis pour soutenir cette idee ?',
+      'Quel autre point de vue faut-il aussi considerer ?',
+      'Pourquoi ce point est-il important dans la vie reelle ?',
+      'Quel effet cela pourrait-il avoir dans lavenir ?'
+    ],
+    de: [
+      'Kannst du ein konkretes Beispiel dafuer geben?',
+      'Welche andere Seite des Problems sollten wir beachten?',
+      'Warum ist dieser Punkt im echten Leben wichtig?',
+      'Wie koennte das Menschen in Zukunft beeinflussen?'
+    ],
+    es: [
+      'Puedes dar un ejemplo concreto para apoyar esa idea?',
+      'Que otro punto de vista deberiamos considerar?',
+      'Por que crees que ese punto importa en la vida real?',
+      'Como podria afectar a las personas en el futuro?'
+    ]
+  };
+
+  const questions = copy[languageKey(targetLanguage)] || copy.en;
+  return questions[index % questions.length];
+}
+
+export function mockPracticeHintData({ targetLanguage = 'en', userTurnCount = 1 } = {}) {
+  const index = Math.max(0, userTurnCount - 1);
+  const copy = {
+    en: [
+      {
+        phrases: ['One specific example is regenerative medicine, because it shows real medical potential.'],
+        keywords: ['specific example', 'regenerative medicine']
+      },
+      {
+        phrases: ['Another point of view is ethical concern, because not every scientific advance is automatically safe.'],
+        keywords: ['point of view', 'ethical concern']
+      },
+      {
+        phrases: ['This matters in real life because adult cells can be reprogrammed for future treatment.'],
+        keywords: ['real life', 'adult cells']
+      },
+      {
+        phrases: ['In the future, this breakthrough could influence medical research and organ repair.'],
+        keywords: ['future', 'medical research']
+      }
+    ],
+    'zh-CN': [
+      {
+        phrases: ['一个具体例子是再生医学，因为它显示了真实的医学潜力。'],
+        keywords: ['具体例子', '再生医学']
+      },
+      {
+        phrases: ['另一种角度是伦理担忧，因为科学进步并不一定自动安全。'],
+        keywords: ['另一种角度', '伦理担忧']
+      },
+      {
+        phrases: ['这在现实生活中重要，因为成年细胞可以被重新编程。'],
+        keywords: ['现实生活', '成年细胞']
+      },
+      {
+        phrases: ['未来，这项突破可能影响医学研究和器官修复。'],
+        keywords: ['未来', '医学研究']
+      }
+    ],
+    fr: [
+      {
+        phrases: ['Un exemple precis est la medecine regenerative, car elle montre un vrai potentiel medical.'],
+        keywords: ['exemple precis', 'medecine regenerative']
+      },
+      {
+        phrases: ['Un autre point de vue est le risque ethique, car tout progres scientifique nest pas automatiquement sur.'],
+        keywords: ['point de vue', 'risque ethique']
+      },
+      {
+        phrases: ['Cela compte dans la vie reelle, car des cellules adultes peuvent etre reprogramees.'],
+        keywords: ['vie reelle', 'cellules adultes']
+      },
+      {
+        phrases: ['A lavenir, cette decouverte pourrait influencer la recherche medicale.'],
+        keywords: ['avenir', 'recherche medicale']
+      }
+    ],
+    de: [
+      {
+        phrases: ['Ein konkretes Beispiel ist regenerative Medizin, weil sie echtes medizinisches Potenzial zeigt.'],
+        keywords: ['konkretes Beispiel', 'regenerative Medizin']
+      },
+      {
+        phrases: ['Eine andere Sicht ist das ethische Risiko, weil Fortschritt nicht automatisch sicher ist.'],
+        keywords: ['andere Sicht', 'ethisches Risiko']
+      },
+      {
+        phrases: ['Das ist im echten Leben wichtig, weil erwachsene Zellen neu programmiert werden koennen.'],
+        keywords: ['echten Leben', 'erwachsene Zellen']
+      },
+      {
+        phrases: ['In Zukunft koennte dieser Durchbruch medizinische Forschung beeinflussen.'],
+        keywords: ['Zukunft', 'medizinische Forschung']
+      }
+    ],
+    es: [
+      {
+        phrases: ['Un ejemplo concreto es la medicina regenerativa, porque muestra potencial medico real.'],
+        keywords: ['ejemplo concreto', 'medicina regenerativa']
+      },
+      {
+        phrases: ['Otro punto de vista es la preocupacion etica, porque no todo avance cientifico es automaticamente seguro.'],
+        keywords: ['punto de vista', 'preocupacion etica']
+      },
+      {
+        phrases: ['Esto importa en la vida real porque las celulas adultas pueden reprogramarse.'],
+        keywords: ['vida real', 'celulas adultas']
+      },
+      {
+        phrases: ['En el futuro, este avance podria influir en la investigacion medica.'],
+        keywords: ['futuro', 'investigacion medica']
+      }
+    ]
+  };
+  const hints = (copy[languageKey(targetLanguage)] || copy.en)[index % (copy[languageKey(targetLanguage)] || copy.en).length];
+
+  return {
+    scale: {
+      supportedLevels: ['none', 'keywords', 'outline', 'strong_support'],
+      defaultLevel: 'strong_support'
+    },
+    phrases: hints.phrases,
+    keywords: hints.keywords
+  };
+}
+
 export function mockLearnStart({ topicOrMaterial = '', appLanguage = 'zh-CN', targetLanguage = 'en', persona = { type: 'guide', name: '' } }) {
   const title = topicTitleFromInput(topicOrMaterial);
   const personaName = persona?.name || (persona?.type === 'expert' ? 'a topic expert' : 'your learning guide');

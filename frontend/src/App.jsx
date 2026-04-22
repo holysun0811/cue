@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { flushSync } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -48,7 +48,7 @@ const DEFAULT_SESSION = {
   initialMessages: [],
   conversationMessages: [],
   mode: 'practice',
-  followUpEnabled: false,
+  followUpEnabled: true,
   extractedText: '',
   speakingPlan: [],
   roundGoal: '',
@@ -103,6 +103,26 @@ function firstExaminerAudioMessage(session) {
   return null;
 }
 
+function buildPracticeTranscript(messages = []) {
+  return messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.transcript || message.text || '')
+    .filter(Boolean)
+    .join('\n');
+}
+
+function buildFinishedPracticeAttempt({ messages = [], round = 1 }) {
+  return {
+    attemptId: `conversation_${Date.now().toString(36)}`,
+    transcript: buildPracticeTranscript(messages),
+    conversationMessages: messages,
+    durationSec: messages
+      .filter((message) => message.role === 'user')
+      .reduce((sum, message) => sum + (message.durationSec || 0), 0),
+    round
+  };
+}
+
 function browserLanguage() {
   const language = navigator.language || 'en';
   if (language.startsWith('zh')) return 'zh-CN';
@@ -142,7 +162,13 @@ export default function App() {
   const [globalLoadingKey, setGlobalLoadingKey] = useState('');
   const [practiceViewId, setPracticeViewId] = useState(0);
   const [reviewViewId, setReviewViewId] = useState(0);
+  const [finishConfirmOpen, setFinishConfirmOpen] = useState(false);
   const practiceEntryAudioRef = useRef(null);
+
+  const practiceUserMessageCount = useMemo(
+    () => (session.conversationMessages || []).filter((message) => message.role === 'user').length,
+    [session.conversationMessages]
+  );
 
   const canPractice = useMemo(() => Boolean(session.sessionId && session.speakingPlan.length), [session]);
   const showGlobalLoading = Boolean(globalLoadingKey) || speakBusy || (bridgeBusy && step !== 'learn');
@@ -416,7 +442,35 @@ export default function App() {
   };
 
   const goPrepFromReview = () => {
+    if ((window.history.state?.idx ?? 0) > 0) {
+      navigate(-1);
+      return;
+    }
+
     navigate('/speak/prep', { replace: true });
+  };
+
+  const finishPractice = (conversationMessages) => {
+    const messages = conversationMessages || session.conversationMessages || [];
+    const latestAttempt = buildFinishedPracticeAttempt({
+      messages,
+      round: session.round
+    });
+
+    flushSync(() => {
+      setReviewViewId((current) => current + 1);
+      updateSession({
+        conversationMessages: messages,
+        latestAttempt,
+        latestReview: null
+      });
+    });
+    navigate('/speak/review', { replace: true });
+  };
+
+  const confirmFinishPractice = () => {
+    setFinishConfirmOpen(false);
+    finishPractice();
   };
 
   const takeTwo = async () => {
@@ -448,7 +502,24 @@ export default function App() {
 
       <section className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <PhoneFrame overlay={<GlobalLoadingOverlay label={globalLoadingLabel} show={showGlobalLoading} />}>
-          <Header onBack={step === 'review' ? goPrepFromReview : null} step={step} />
+          <Header
+            onBack={step === 'review' ? goPrepFromReview : null}
+            rightSlot={
+              step === 'practice' && practiceUserMessageCount > 0 ? (
+                <motion.button
+                  className="flex h-10 items-center px-1 text-[15px] font-semibold text-violet-600 transition hover:text-violet-700"
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => setFinishConfirmOpen(true)}
+                  type="button"
+                  whileTap={{ scale: 0.96, opacity: 0.8 }}
+                >
+                  {t('practice.finish')}
+                </motion.button>
+              ) : null
+            }
+            step={step}
+          />
           <AnimatePresence mode="wait">
             {step === 'home' && (
               <HomeScreen
@@ -503,13 +574,6 @@ export default function App() {
               <StageScreen
                 entryAudioRef={practiceEntryAudioRef}
                 key={`practice-${session.round}-${practiceViewId}`}
-                onAttempt={(attempt) => {
-                  flushSync(() => {
-                    setReviewViewId((current) => current + 1);
-                    updateSession({ latestAttempt: attempt, latestReview: null });
-                  });
-                  navigate('/speak/review', { replace: true });
-                }}
                 onSessionPatch={updateSession}
                 session={session}
               />
@@ -521,6 +585,53 @@ export default function App() {
                 onTakeTwo={takeTwo}
                 session={session}
               />
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {finishConfirmOpen && (
+              <motion.div
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 z-[130] flex items-center justify-center bg-black/40 px-6 backdrop-blur-[2px]"
+                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }}
+                onClick={() => setFinishConfirmOpen(false)}
+                transition={{ duration: 0.15 }}
+              >
+                <motion.div
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full max-w-[270px] overflow-hidden rounded-[14px] bg-white shadow-[0_30px_60px_rgba(15,23,42,0.28)]"
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  onClick={(event) => event.stopPropagation()}
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                >
+                  <div className="px-5 pb-4 pt-5 text-center">
+                    <h3 className="text-[17px] font-bold tracking-tight text-slate-950">
+                      {t('practice.finishConfirmTitle')}
+                    </h3>
+                    <p className="mt-1.5 text-[13px] leading-snug text-slate-500">
+                      {t('practice.finishConfirmBody')}
+                    </p>
+                  </div>
+                  <div className="flex border-t border-slate-200 text-[15px]">
+                    <button
+                      className="flex-1 py-[11px] font-normal text-slate-600 transition active:bg-slate-100"
+                      onClick={() => setFinishConfirmOpen(false)}
+                      type="button"
+                    >
+                      {t('practice.finishConfirmCancel')}
+                    </button>
+                    <div aria-hidden="true" className="w-px bg-slate-200" />
+                    <button
+                      className="flex-1 py-[11px] font-semibold text-violet-600 transition active:bg-violet-50"
+                      onClick={confirmFinishPractice}
+                      type="button"
+                    >
+                      {t('practice.finishConfirmAccept')}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
           </AnimatePresence>
         </PhoneFrame>

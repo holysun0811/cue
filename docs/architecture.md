@@ -46,8 +46,8 @@ Short implementation map for new Codex sessions.
 - `POST /api/learn/message`: continues Learn chat and updates collected state.
 - `POST /api/bridge/generate`: creates a bridge recap from a Learn session.
 - `POST /api/speak/prepare`: prepares direct or bridge-based Speak session, approaches, speaking plan, examiner prompt/TTS, initial conversation messages, and hint data.
-- `POST /api/speak/submit`: transcribes/submits a practice attempt.
-- `POST /api/review/generate`: creates actionable review and TTS audio for better/top versions.
+- `POST /api/speak/submit`: transcribes one Practice user turn, appends the user message, generates/synthesizes the next examiner follow-up, generates fresh Phrase `hintData` with highlightable keywords for the next answer, stores conversation history, and returns the updated messages.
+- `POST /api/review/generate`: creates actionable review and TTS audio for better/top versions. It accepts full Practice `conversationMessages` and falls back to stored session conversation history when available.
 - `POST /api/speak/take2`: increments round and returns next hint goal.
 - `POST /api/audio/preview`: generates a sample answer and audio preview.
 
@@ -58,10 +58,11 @@ Legacy/parallel routes still exist under `/api/ai`, `/api/voice`, `/api/plan`, `
 - Settings expose two languages: App language (`uiLanguage` in React, `appLanguage` in API payloads) and Practice language (`targetLanguage`).
 - App language owns UI/help/explanation data; Practice language owns practice prompts, examiner prompt/TTS, speaking plans, Phrase hint content/highlights, sample answers, subtitles/audio, and imitation answer versions.
 - Speak sessions use both `sessionId` and `speakSessionId`; the frontend normalizes `speakSessionId || sessionId` into `session.sessionId`.
-- Practice sessions also carry IM-ready fields: `canonicalPrompt`, `examinerPromptText`, `examinerPromptAudio`, `hintData`, `initialMessages`, `conversationMessages`, `mode`, and `followUpEnabled`. Message roles are intended to support `examiner`, `user`, and `system`; message types are intended to support `text` and `audio`.
+- Practice sessions also carry IM-ready fields: `canonicalPrompt`, `examinerPromptText`, `examinerPromptAudio`, `hintData`, `initialMessages`, `conversationMessages`, `mode`, and `followUpEnabled`. Message roles support `examiner`, `user`, and `system`; message types support `text` and `audio`.
 - A speaking plan is expected to have exactly three items: `opening`, `point_1`, and `point_2_or_conclusion`.
-- `hintData` may contain legacy `outline`, `phrases`, `keywords`, and `scale`, but `StageScreen` currently consumes only `phrases` for the right-side user ghost bubble and `keywords` for inline highlighting.
-- `StageScreen` renders the Phrase hint as a right-side user ghost bubble. This ghost bubble is not persisted as a conversation message; it exits before the submitted user audio bubble is inserted.
+- `hintData` may contain legacy `outline`, `phrases`, `keywords`, and `scale`, but `StageScreen` currently consumes only `phrases` for the right-side user ghost bubble and `keywords` for inline highlighting. Follow-up hint generation asks for keywords that appear verbatim inside the phrases.
+- `StageScreen` renders the Phrase hint as a right-side user ghost bubble. This ghost bubble is not persisted as a conversation message; it exits before the submitted user audio bubble is inserted. After each submitted user turn, the backend returns an examiner follow-up message that is appended to the real conversation stream.
+- Review is no longer triggered by submitting a single Practice answer. The frontend creates a finished practice attempt only when the learner taps "Finish practice"; that attempt carries the full `conversationMessages` and an aggregate transcript of all user turns.
 - Recommended answer approaches are expected to be three items. The response now also includes `allApproachPlans` — an array of `{ approachId, speakingPlan }` with IDs forcibly normalised to `approach_1/2/3` by position. Frontend uses positional-index lookup first, ID-based match as fallback.
 - Bridge prompts are `{ id, angleLabel, questionText }`.
 - Review includes `summary`, `topIssues` (exactly 3), `betterVersion`, `topVersion`, `scores`, and usually `take2Goal`.

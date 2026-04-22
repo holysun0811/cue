@@ -16,7 +16,8 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Bridge-to-Speak requires choosing a recommended practice prompt first.
 - Mock mode is part of the demo contract, not just a temporary fallback.
 - Practice hint UI is now single-mode: the floating lightbulb toggles a Phrase ghost bubble directly. There is no Outline / Phrases / Keywords switch in Practice.
-- Practice is now an IM-style examiner conversation, not a static answer card. Examiner messages are conversation content; hints are shown as a temporary user-side ghost bubble and must not be inserted into the real chat message stream.
+- Practice is now a multi-turn IM-style examiner conversation, not a static answer card or a one-answer flow. Examiner messages are conversation content; hints are shown as a temporary user-side ghost bubble and must not be inserted into the real chat message stream.
+- Practice does not auto-enter Review after a user answer. Review starts only when the learner taps "Finish practice" after sending at least one answer.
 - Phrase hint content and highlighted key terms use Practice language.
 - Review shows loading skeletons while generating, surfaces the single most important fix prominently, and only renders the CTA after review data is ready.
 
@@ -31,11 +32,16 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Before sending, the Phrase hint renders as a translucent/dashed right-side ghost bubble labelled as the answer draft. It stays visible while recording when toggled on, highlights a few matching key terms, and fades/scales out before the real user audio message appears.
 - Sent user recordings appear as right-side audio bubbles with waveform, duration, play/pause, and optional transcript.
 - The hint UI defaults to a draggable floating lightbulb inside the IM list area, snapped to the left or right edge. Tapping it directly toggles the Phrase ghost bubble; it no longer expands into a large panel or mode switch.
+- Sending a recording now stays inside Practice: `/api/speak/submit` transcribes the turn, returns the saved user message plus a generated examiner follow-up, and the follow-up is appended/auto-played as the next left-side message.
+- A light "Finish practice" button appears near the chat top only after at least one user message. Tapping it creates a finished conversation attempt and navigates to Review.
 
 ### Speak Prepare / Practice data
 - `/api/speak/prepare` now returns `canonicalPrompt`, natural `examinerPromptText`, `examinerPromptAudio`, `hintData`, `mode`, `followUpEnabled`, and `initialMessages` in addition to the existing approach/plan fields.
 - `gemini.service.js` added `generateExaminerPrompt()` to rewrite the canonical prompt into a natural examiner question in Practice language, with a mock fallback.
 - `speak.controller.js` synthesizes examiner TTS during preparation and builds hint data; Practice currently consumes `phrases` for the ghost bubble and `keywords` only for inline highlights.
+- `gemini.service.js` now also owns `generateExaminerFollowUp()` and its follow-up examiner prompt. The prompt instructs Gemini to act as a concise spoken-language examiner, ask exactly one natural target-language follow-up, avoid review feedback, avoid repeating the original prompt, and keep the session open until the learner finishes.
+- `speak.controller.js` now extends `/api/speak/submit` into the multi-turn Practice endpoint: it transcribes the user answer, merges it into `conversationMessages`, generates/synthesizes the next examiner message, generates fresh Phrase `hintData` for the next answer, stores the updated conversation/hints, and returns both messages.
+- `gemini.service.js` also owns `generatePracticeHintData()`, which creates 1-2 target-language phrase hints plus highlight keywords for the next answer. The prompt requires each keyword to appear verbatim in the phrases so the frontend highlighter works.
 - Recommended approach switching in `PrepRoom` still stays local and now also refreshes local `hintData` for the selected plan.
 
 ### ReviewScreen
@@ -45,6 +51,7 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - CTA (`helper` prop removed from `StickyCTA`): "Try again" button is clean with no floating hint text above it.
 - "Take 2" renamed to "Try again" (en) / "按建议再试一遍" (zh-CN) / equivalent in fr, de, es.
 - New locale keys added: `loadingTitle`, `loadingHint`, `topFixLabel`, `otherNotes` across all 5 locales.
+- Review generation now receives the full Practice `conversationMessages` and an aggregate transcript of all user turns. The backend also falls back to stored session conversation history if the request omits messages.
 
 ### STT Service (bug fix)
 - `stt.service.js` now normalises `languageCode` via `toTtsLanguageCode()` before calling Google STT. Fixes `INVALID_ARGUMENT` errors caused by short codes like `en` or `zh-CN` being passed directly to the API.
@@ -95,7 +102,7 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Add focused tests for direct Speak, Learn-to-Bridge-to-Speak, review generation, and Take 2.
 - Validate real Gemini/STT/TTS credentials against the current route payloads.
 - Consider real image/OCR handling if image-based school prompts become important.
-- Add follow-up generation for exam mode using the existing `mode`, `followUpEnabled`, and `conversationMessages` shape.
+- Decide how many follow-up turns exam mode should require before it recommends finishing; Practice currently lets the learner decide when to finish.
 
 ## Maintenance Rule
 

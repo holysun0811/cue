@@ -1,7 +1,8 @@
-import { analyzePromptInput, buildSpeakingPlan, generateExaminerPrompt } from '../services/gemini.service.js';
+import { analyzePromptInput, buildSpeakingPlan, generateExaminerFollowUp, generateExaminerPrompt, generatePracticeHintData } from '../services/gemini.service.js';
 import { transcribeAudio } from '../services/stt.service.js';
 import { synthesizeText } from '../services/tts.service.js';
 import { createAttempt, createSession, getBridge, getSession, updateSession } from '../services/session.service.js';
+import { createId } from '../utils/ids.js';
 import { decodeBase64Payload, estimateDurationSecFromBase64 } from '../utils/media.js';
 
 function appLanguageKey(language = 'en') {
@@ -30,6 +31,38 @@ function buildPracticeHintData({ speakingPlan = [], appLanguage = 'en' } = {}) {
     outline: outlineCopy[key] || outlineCopy.en,
     phrases: speakingPlan.map((item) => item.text).filter(Boolean).slice(0, 3),
     keywords: speakingPlan.map((item) => item.keyword).filter(Boolean).slice(0, 3)
+  };
+}
+
+function stripClientOnlyMessageFields(message = {}) {
+  const { audioUrl, ...safeMessage } = message;
+  return safeMessage;
+}
+
+function mergeUserMessage({ history = [], clientMessageId, transcript, durationSec, createdAt }) {
+  const userMessage = {
+    id: clientMessageId || createId('user'),
+    role: 'user',
+    type: 'audio',
+    transcript,
+    durationSec,
+    createdAt: createdAt || new Date().toISOString()
+  };
+  const safeHistory = history.map(stripClientOnlyMessageFields);
+  const existingIndex = safeHistory.findIndex((message) => message.id === userMessage.id);
+
+  if (existingIndex >= 0) {
+    const merged = [...safeHistory];
+    merged[existingIndex] = {
+      ...merged[existingIndex],
+      ...userMessage
+    };
+    return { conversationMessages: merged, userMessage: merged[existingIndex] };
+  }
+
+  return {
+    conversationMessages: [...safeHistory, userMessage],
+    userMessage
   };
 }
 
@@ -123,7 +156,7 @@ export async function prepareSpeak(req, res, next) {
       entryType: req.body.entryType || 'direct',
       bridgeId: bridge?.bridgeId,
       mode: req.body.mode || 'practice',
-      followUpEnabled: Boolean(req.body.followUpEnabled),
+      followUpEnabled: req.body.followUpEnabled ?? true,
       canonicalPrompt,
       examinerPromptText,
       examinerPromptAudio: examinerAudio.audioUrl,
@@ -191,25 +224,82 @@ export async function prepareSpeak(req, res, next) {
 export async function submitSpeak(req, res, next) {
   try {
     const speakSessionId = req.body.speakSessionId || req.body.sessionId;
+    const session = getSession(speakSessionId);
     const transcriptResult = req.body.transcript
       ? { transcript: req.body.transcript }
       : await transcribeAudio({
           audioBuffer: decodeBase64Payload(req.body.audioBase64),
           languageCode: req.body.targetLanguage || 'en-US'
         });
+    const durationSec = req.body.durationSec || estimateDurationSecFromBase64(req.body.audioBase64);
 
     const attempt = createAttempt({
       sessionId: speakSessionId,
       round: req.body.round || 1,
       hintLevel: req.body.hintLevel || 'phrases',
       transcript: transcriptResult.transcript,
-      durationSec: req.body.durationSec || estimateDurationSecFromBase64(req.body.audioBase64)
+      durationSec
+    });
+    const history = Array.isArray(req.body.messageHistory)
+      ? req.body.messageHistory
+      : session?.conversationMessages || session?.initialMessages || [];
+    const { conversationMessages: withUserMessage, userMessage } = mergeUserMessage({
+      history,
+      clientMessageId: req.body.clientMessageId,
+      transcript: transcriptResult.transcript,
+      durationSec,
+      createdAt: req.body.createdAt
+    });
+    const userTurnCount = withUserMessage.filter((message) => message.role === 'user').length;
+    const examinerReplyText = await generateExaminerFollowUp({
+      promptSummary: session?.canonicalPrompt || session?.promptSummary || req.body.promptSummary || '',
+      targetLanguage: session?.targetLanguage || req.body.targetLanguage || 'en',
+      speakingPlan: session?.speakingPlan || req.body.speakingPlan || [],
+      conversationMessages: withUserMessage,
+      lastUserTranscript: transcriptResult.transcript,
+      userTurnCount
+    });
+    const [examinerAudio, hintData] = await Promise.all([
+      synthesizeText({
+        text: examinerReplyText,
+        language: session?.targetLanguage || req.body.targetLanguage || 'en'
+      }),
+      generatePracticeHintData({
+        targetLanguage: session?.targetLanguage || req.body.targetLanguage || 'en',
+        promptSummary: session?.canonicalPrompt || session?.promptSummary || req.body.promptSummary || '',
+        examinerQuestion: examinerReplyText,
+        lastUserTranscript: transcriptResult.transcript,
+        speakingPlan: session?.speakingPlan || req.body.speakingPlan || [],
+        conversationMessages: withUserMessage,
+        userTurnCount
+      })
+    ]);
+    const examinerMessage = {
+      id: createId('examiner'),
+      role: 'examiner',
+      type: 'text',
+      text: examinerReplyText,
+      audioUrl: examinerAudio.audioUrl,
+      createdAt: new Date().toISOString()
+    };
+    const conversationMessages = [...withUserMessage, examinerMessage];
+
+    updateSession(speakSessionId, {
+      conversationMessages,
+      hintData,
+      latestTurnAttempt: attempt,
+      followUpEnabled: true
     });
 
     res.json({
       attemptId: attempt.attemptId,
       transcript: attempt.transcript,
-      durationSec: attempt.durationSec
+      durationSec: attempt.durationSec,
+      userMessage,
+      examinerMessage,
+      hintData,
+      conversationMessages,
+      canFinishPractice: userTurnCount > 0
     });
   } catch (error) {
     next(error);

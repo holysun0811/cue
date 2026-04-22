@@ -201,6 +201,55 @@ function UserGhostBubble({ hintData, state, visible }) {
   );
 }
 
+function ExaminerTypingBubble({ showLabel }) {
+  const { t } = useTranslation();
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className="flex justify-start"
+      exit={{ opacity: 0, y: -4, scale: 0.96 }}
+      initial={{ opacity: 0, y: 6, scale: 0.96 }}
+      layout
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+    >
+      <div className="max-w-[82%]">
+        <div className="mb-1 flex items-center gap-2 px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] text-white">E</span>
+          {t('practice.examiner')}
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-[22px] rounded-tl-md border border-white bg-white/88 px-3.5 py-3 shadow-[0_10px_24px_rgba(99,102,241,0.09)] backdrop-blur-xl">
+          <span className="flex items-center gap-1">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                animate={{ y: [0, -3, 0], opacity: [0.45, 1, 0.45] }}
+                className="h-1.5 w-1.5 rounded-full bg-slate-400"
+                key={i}
+                transition={{
+                  duration: 0.9,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                  delay: i * 0.15
+                }}
+              />
+            ))}
+          </span>
+          {showLabel && (
+            <motion.span
+              animate={{ opacity: 1 }}
+              className="text-[11px] font-bold text-slate-400"
+              initial={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {t('practice.typing')}
+            </motion.span>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function UserAudioMessage({ message }) {
   const { t } = useTranslation();
   const [playing, setPlaying] = useState(false);
@@ -255,6 +304,58 @@ function UserAudioMessage({ message }) {
       </div>
     </motion.div>
   );
+}
+
+function mergeServerConversation({ localAudioUrl, localMessages = [], serverMessages = [], userMessage }) {
+  if (!serverMessages.length) return [];
+
+  return serverMessages.map((message) => {
+    const localMessage = localMessages.find((item) => item.id === message.id);
+    if (message.id === userMessage.id) {
+      return {
+        ...(localMessage || {}),
+        ...message,
+        audioUrl: localAudioUrl,
+        transcript: message.transcript || userMessage.transcript || ''
+      };
+    }
+
+    return {
+      ...(localMessage || {}),
+      ...message,
+      audioUrl: message.audioUrl || localMessage?.audioUrl || ''
+    };
+  }).filter((message) => message.role !== 'user' || message.audioUrl || message.transcript);
+}
+
+function buildSubmittedMessages({ attempt, messages, userMessage }) {
+  const savedUserMessage = {
+    ...userMessage,
+    ...(attempt.userMessage || {}),
+    audioUrl: userMessage.audioUrl,
+    transcript: attempt.transcript || attempt.userMessage?.transcript || ''
+  };
+  const serverMessages = mergeServerConversation({
+    localAudioUrl: userMessage.audioUrl,
+    localMessages: messages,
+    serverMessages: attempt.conversationMessages || [],
+    userMessage: savedUserMessage
+  });
+
+  if (serverMessages.length) {
+    return serverMessages;
+  }
+
+  return [
+    ...messages,
+    savedUserMessage,
+    ...(attempt.examinerMessage ? [attempt.examinerMessage] : [])
+  ];
+}
+
+function hasNewExaminerReply({ messagesBefore = [], messagesAfter = [] }) {
+  const oldExaminerIds = new Set(messagesBefore.filter((message) => message.role === 'examiner').map((message) => message.id));
+  return messagesAfter.some((message) => message.role === 'examiner' && !oldExaminerIds.has(message.id));
 }
 
 function FloatingHintControl({ chatAreaRef, expanded, onToggle }) {
@@ -458,7 +559,7 @@ function VoiceComposer({
   );
 }
 
-export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, session }) {
+export default function StageScreen({ entryAudioRef, onSessionPatch, session }) {
   const { t } = useTranslation();
   const [hintsExpanded, setHintsExpanded] = useState(false);
   const [recorderState, setRecorderState] = useState('idle');
@@ -466,6 +567,7 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
   const [error, setError] = useState('');
   const [pending, setPending] = useState(null);
   const [playingExaminerId, setPlayingExaminerId] = useState('');
+  const [typingLabelVisible, setTypingLabelVisible] = useState(false);
   const [messages, setMessages] = useState(() => {
     if (session.conversationMessages?.length) return session.conversationMessages;
     if (session.initialMessages?.length) return session.initialMessages;
@@ -483,8 +585,9 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
+  const sentAudioUrlsRef = useRef(new Set());
   const startedAtRef = useRef(0);
-  const autoPlayedRef = useRef(false);
+  const autoPlayedExaminerIdsRef = useRef(new Set());
   const holdActiveRef = useRef(false);
   const bottomRef = useRef(null);
   const chatAreaRef = useRef(null);
@@ -525,19 +628,33 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, ghostVisible]);
+  }, [messages, ghostVisible, recorderState]);
 
   useEffect(() => {
-    const firstExaminer = messages.find((message) => message.role === 'examiner' && message.audioUrl);
-    if (!firstExaminer || autoPlayedRef.current) return;
+    if (recorderState !== 'sending') {
+      setTypingLabelVisible(false);
+      return undefined;
+    }
+    // Animation-only by default; if backend takes >2s, show a subtle "Typing..." caption.
+    const timer = window.setTimeout(() => setTypingLabelVisible(true), 2000);
+    return () => window.clearTimeout(timer);
+  }, [recorderState]);
+
+  useEffect(() => {
+    const nextExaminer = messages.find((message) => (
+      message.role === 'examiner' &&
+      message.audioUrl &&
+      !autoPlayedExaminerIdsRef.current.has(message.id)
+    ));
+    if (!nextExaminer) return;
+    autoPlayedExaminerIdsRef.current.add(nextExaminer.id);
 
     const entryAudio = entryAudioRef?.current;
-    if (entryAudio?.audio && entryAudio.audioUrl === firstExaminer.audioUrl) {
-      autoPlayedRef.current = true;
+    if (entryAudio?.audio && entryAudio.audioUrl === nextExaminer.audioUrl) {
       entryAudioRef.current = null;
       const audio = entryAudio.audio;
       examinerAudioRef.current = audio;
-      setPlayingExaminerId(firstExaminer.id);
+      setPlayingExaminerId(nextExaminer.id);
 
       const cleanup = () => {
         if (examinerAudioRef.current === audio) {
@@ -547,7 +664,7 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
       };
       const fallbackPlay = () => {
         cleanup();
-        playExaminerAudio(firstExaminer.audioUrl, firstExaminer.id);
+        playExaminerAudio(nextExaminer.audioUrl, nextExaminer.id);
       };
 
       audio.addEventListener('ended', cleanup, { once: true });
@@ -556,8 +673,7 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
       return undefined;
     }
 
-    autoPlayedRef.current = true;
-    playExaminerAudio(firstExaminer.audioUrl, firstExaminer.id);
+    playExaminerAudio(nextExaminer.audioUrl, nextExaminer.id);
   }, [entryAudioRef, messages, playExaminerAudio]);
 
   useEffect(() => {
@@ -576,8 +692,15 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
 
   useEffect(() => () => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
-    if (pending?.audioUrl) URL.revokeObjectURL(pending.audioUrl);
+    if (pending?.audioUrl && !sentAudioUrlsRef.current.has(pending.audioUrl)) {
+      URL.revokeObjectURL(pending.audioUrl);
+    }
   }, [pending?.audioUrl]);
+
+  useEffect(() => () => {
+    sentAudioUrlsRef.current.forEach((audioUrl) => URL.revokeObjectURL(audioUrl));
+    sentAudioUrlsRef.current.clear();
+  }, []);
 
   const startRecording = async () => {
     setError('');
@@ -653,7 +776,13 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
     setRecorderState('sending');
     setError('');
     await new Promise((resolve) => window.setTimeout(resolve, 180));
-    setMessages((current) => [...current, userMessage]);
+
+    const messagesWithUser = [...messages, userMessage];
+    setMessages(messagesWithUser);
+    // Sync the user message to session immediately so page-level actions
+    // (e.g. titlebar Finish practice) can appear as soon as a message is sent,
+    // without waiting for the examiner follow-up to come back.
+    onSessionPatch({ conversationMessages: messagesWithUser });
 
     try {
       const attempt = await submitPractice({
@@ -665,19 +794,35 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
         hintSupportLevel: 'strong_support',
         durationSec: pending.durationSec,
         mode: session.mode || 'practice',
-        messageHistory: [...messages, userMessage].map(({ audioUrl, ...message }) => message)
+        clientMessageId: userMessage.id,
+        createdAt: userMessage.createdAt,
+        promptSummary: session.promptSummary,
+        speakingPlan: session.speakingPlan,
+        messageHistory: messagesWithUser.map(({ audioUrl, ...message }) => message)
       });
-      const patchedMessages = [...messages, { ...userMessage, transcript: attempt.transcript }];
+      const patchedMessages = buildSubmittedMessages({ attempt, messages, userMessage });
+      if (!hasNewExaminerReply({ messagesBefore: messages, messagesAfter: patchedMessages })) {
+        throw new Error('Missing examiner follow-up.');
+      }
+      sentAudioUrlsRef.current.add(userMessage.audioUrl);
       setMessages(patchedMessages);
+      setPending(null);
+      setRecorderState('idle');
       onSessionPatch({
         hintLevel: 'phrases',
         hintSupportLevel: 'strong_support',
-        conversationMessages: patchedMessages
+        conversationMessages: patchedMessages,
+        hintData: attempt.hintData || session.hintData,
+        latestAttempt: null,
+        latestTurnAttempt: {
+          attemptId: attempt.attemptId,
+          transcript: attempt.transcript,
+          durationSec: attempt.durationSec
+        }
       });
-      await new Promise((resolve) => window.setTimeout(resolve, 520));
-      onAttempt(attempt);
     } catch {
-      setMessages((current) => current.filter((message) => message.id !== userMessage.id));
+      setMessages(messages);
+      onSessionPatch({ conversationMessages: messages });
       setError(t('practice.submitError'));
       setRecorderState('preview');
       setHintsExpanded(restoreGhostOnError);
@@ -715,11 +860,11 @@ export default function StageScreen({ entryAudioRef, onAttempt, onSessionPatch, 
                 <UserGhostBubble hintData={hintData} state={recorderState} visible />
               )}
             </AnimatePresence>
-            {recorderState === 'sending' && (
-              <p className="mx-auto w-fit rounded-full bg-white/72 px-3 py-2 text-[11px] font-black text-slate-400 shadow-[0_8px_18px_rgba(99,102,241,0.06)]">
-                {t('practice.processing')}
-              </p>
-            )}
+            <AnimatePresence>
+              {recorderState === 'sending' && (
+                <ExaminerTypingBubble key="examiner_typing" showLabel={typingLabelVisible} />
+              )}
+            </AnimatePresence>
             <div ref={bottomRef} />
           </div>
         </div>
