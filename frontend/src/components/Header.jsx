@@ -3,13 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, Sparkles } from 'lucide-react';
 
-export default function Header({ step }) {
+export default function Header({ onBack, step }) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === '/';
   const title = isHome ? '' : t(`steps.${step}`);
   const goBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
     if (location.pathname === '/learn' || location.pathname.startsWith('/learn/')) {
       navigate('/');
       return;

@@ -15,17 +15,28 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Only the custom approach option triggers a new backend generation call.
 - Bridge-to-Speak requires choosing a recommended practice prompt first.
 - Mock mode is part of the demo contract, not just a temporary fallback.
-- Practice hint mode no longer includes an "off" option in the UI. The three visible modes are outline, phrases, and keywords. "off" is still handled gracefully in logic but is not selectable.
+- Practice hint UI is now single-mode: the floating lightbulb toggles a Phrase ghost bubble directly. There is no Outline / Phrases / Keywords switch in Practice.
+- Practice is now an IM-style examiner conversation, not a static answer card. Examiner messages are conversation content; hints are shown as a temporary user-side ghost bubble and must not be inserted into the real chat message stream.
+- Phrase hint content and highlighted key terms use Practice language.
 - Review shows loading skeletons while generating, surfaces the single most important fix prominently, and only renders the CTA after review data is ready.
 
 ## Recent Changes
 
 ### StageScreen (Practice page)
-- Removed `'off'` from the hint-mode segmented control. Control now has exactly 3 options: outline / phrases / keywords.
-- Removed the large circular mic button and `AudioWave` animation component. CTA is now a `StickyCTA` sticky bottom button with three text states: "Start answering" / "I finished" / "Analyzing...".
-- Removed the "直接一点" / "Stay direct" guidance pill (`guidanceIdle` locale key deleted from all 5 locales).
-- Added a one-line hint description below the segmented control (`hintDesc.outline/phrases/keywords` locale keys added to all 5 locales).
-- Page structure: eyebrow + prompt text → hint mode segmented control → description line → hints card → sticky CTA.
+- Replaced the static prompt + hint card + sticky CTA layout with an IM-style examiner chat.
+- Practice now initializes from `initialMessages` and can hold `conversationMessages` with `role = examiner | user | system` and `type = text | audio`.
+- Examiner first message appears as a left-side bubble and auto-plays `examinerPromptAudio` once on entry; a replay button remains on the bubble.
+- User answering is press-and-hold: pointer down starts recording, pointer up creates a preview. Recording is not auto-submitted.
+- The preview state shows a compact audio preview with play, duration, `say again` (reset to idle), and send icon actions.
+- Before sending, the Phrase hint renders as a translucent/dashed right-side ghost bubble labelled as the answer draft. It stays visible while recording when toggled on, highlights a few matching key terms, and fades/scales out before the real user audio message appears.
+- Sent user recordings appear as right-side audio bubbles with waveform, duration, play/pause, and optional transcript.
+- The hint UI defaults to a draggable floating lightbulb inside the IM list area, snapped to the left or right edge. Tapping it directly toggles the Phrase ghost bubble; it no longer expands into a large panel or mode switch.
+
+### Speak Prepare / Practice data
+- `/api/speak/prepare` now returns `canonicalPrompt`, natural `examinerPromptText`, `examinerPromptAudio`, `hintData`, `mode`, `followUpEnabled`, and `initialMessages` in addition to the existing approach/plan fields.
+- `gemini.service.js` added `generateExaminerPrompt()` to rewrite the canonical prompt into a natural examiner question in Practice language, with a mock fallback.
+- `speak.controller.js` synthesizes examiner TTS during preparation and builds hint data; Practice currently consumes `phrases` for the ghost bubble and `keywords` only for inline highlights.
+- Recommended approach switching in `PrepRoom` still stays local and now also refreshes local `hintData` for the selected plan.
 
 ### ReviewScreen
 - Added a proper loading state: spinner card with title/subtitle + three skeleton placeholder blocks. CTA is hidden during loading.
@@ -45,6 +56,7 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Frontend has common components for bottom sheets, sticky CTA, audio playback, segmented controls, and global loading.
 - Backend is split into route/controller/service layers for input, learn, bridge, speak, audio, review, and older AI/voice/plan/practice/session routes.
 - Gemini service owns structured generation; normalises all `recommendedApproaches` and `allApproachPlans` IDs to `approach_1/2/3` by position index before returning to controller.
+- Speak prepare also owns examiner prompt generation/TTS and IM-ready initial message construction.
 - Google STT/TTS integrations are wired with language-code normalisation and model-selection logic; mock transcript/audio when credentials are absent.
 - Locales exist for `en`, `zh-CN`, `fr`, `de`, and `es`.
 
@@ -60,6 +72,8 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Do not replace the phone-frame app shell with a generic desktop page without a design decision.
 - Do not add `'off'` back to the hint-mode segmented control without a product reason; the three-option layout is intentional.
 - Do not revert `allApproachPlans` pre-generation; the instant local switching UX depends on all three plans being available at session load.
+- Do not turn Practice back into the old static prompt card; the examiner chat shell is now the intended direction.
+- Do not put hints into `conversationMessages`; the user-side ghost bubble is UI state, not a real conversation turn.
 - Do not make the Review CTA visible during loading; it must only appear after review data is present.
 
 ## Known Issues And Constraints
@@ -71,7 +85,8 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - `MediaRecorder` uploads webm audio; Google STT encoding support is inferred by MIME type.
 - Some older routes remain for compatibility or earlier flows and are not the primary frontend path.
 - No automated test suite is visible in package scripts beyond lint/build-style checks.
-- `SegmentedControl` uses `layoutId="hintLevel"` for the spring animation; if Practice and Prep hint selectors are ever mounted simultaneously this will conflict.
+- Examiner prompt TTS is generated during `/api/speak/prepare`; this improves entry playback but adds one TTS step to Speak preparation latency.
+- `SegmentedControl` still defaults to `layoutId="hintLevel"` if reused elsewhere; Practice no longer uses it, so the earlier Prep/Practice collision is currently avoided.
 
 ## Todo
 
@@ -80,7 +95,7 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Add focused tests for direct Speak, Learn-to-Bridge-to-Speak, review generation, and Take 2.
 - Validate real Gemini/STT/TTS credentials against the current route payloads.
 - Consider real image/OCR handling if image-based school prompts become important.
-- Fix `SegmentedControl` `layoutId` collision if Prep and Practice are ever rendered simultaneously.
+- Add follow-up generation for exam mode using the existing `mode`, `followUpEnabled`, and `conversationMessages` shape.
 
 ## Maintenance Rule
 

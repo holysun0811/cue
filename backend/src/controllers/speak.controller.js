@@ -1,7 +1,37 @@
-import { analyzePromptInput, buildSpeakingPlan } from '../services/gemini.service.js';
+import { analyzePromptInput, buildSpeakingPlan, generateExaminerPrompt } from '../services/gemini.service.js';
 import { transcribeAudio } from '../services/stt.service.js';
+import { synthesizeText } from '../services/tts.service.js';
 import { createAttempt, createSession, getBridge, getSession, updateSession } from '../services/session.service.js';
 import { decodeBase64Payload, estimateDurationSecFromBase64 } from '../utils/media.js';
+
+function appLanguageKey(language = 'en') {
+  if (language.startsWith('zh')) return 'zh-CN';
+  if (language.startsWith('fr')) return 'fr';
+  if (language.startsWith('de')) return 'de';
+  if (language.startsWith('es')) return 'es';
+  return 'en';
+}
+
+function buildPracticeHintData({ speakingPlan = [], appLanguage = 'en' } = {}) {
+  const outlineCopy = {
+    en: ['Open with your direct answer.', 'Add one reason or fact.', 'Finish with a short conclusion.'],
+    'zh-CN': ['先直接回答题目。', '加入一个理由或事实。', '用一句简短结论收尾。'],
+    fr: ['Commence par une reponse directe.', 'Ajoute une raison ou un fait.', 'Termine avec une conclusion courte.'],
+    de: ['Beginne mit einer direkten Antwort.', 'Fuege einen Grund oder Fakt hinzu.', 'Schliesse kurz ab.'],
+    es: ['Empieza con una respuesta directa.', 'Anade una razon o un dato.', 'Termina con una conclusion corta.']
+  };
+  const key = appLanguageKey(appLanguage);
+
+  return {
+    scale: {
+      supportedLevels: ['none', 'keywords', 'outline', 'strong_support'],
+      defaultLevel: 'outline'
+    },
+    outline: outlineCopy[key] || outlineCopy.en,
+    phrases: speakingPlan.map((item) => item.text).filter(Boolean).slice(0, 3),
+    keywords: speakingPlan.map((item) => item.keyword).filter(Boolean).slice(0, 3)
+  };
+}
 
 export async function prepareSpeak(req, res, next) {
   try {
@@ -67,11 +97,38 @@ export async function prepareSpeak(req, res, next) {
         ? `${bridge.summary}\n${bridge.speakingAngle}\nSelected practice angle: ${bridge.selectedPrompt?.angleLabel || 'default'}`
         : req.body.taskInput?.text
     });
+    const canonicalPrompt = promptSummary;
+    const examinerPromptText = await generateExaminerPrompt({
+      promptSummary: canonicalPrompt,
+      targetLanguage
+    });
+    const examinerAudio = await synthesizeText({
+      text: examinerPromptText,
+      language: targetLanguage
+    });
+    const hintData = buildPracticeHintData({ speakingPlan: plan.speakingPlan, appLanguage });
+    const initialMessages = [
+      {
+        id: 'examiner_initial',
+        role: 'examiner',
+        type: 'text',
+        text: examinerPromptText,
+        audioUrl: examinerAudio.audioUrl,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     const session = createSession({
       speakSessionId: '',
       entryType: req.body.entryType || 'direct',
       bridgeId: bridge?.bridgeId,
+      mode: req.body.mode || 'practice',
+      followUpEnabled: Boolean(req.body.followUpEnabled),
+      canonicalPrompt,
+      examinerPromptText,
+      examinerPromptAudio: examinerAudio.audioUrl,
+      hintData,
+      initialMessages,
       promptSource: bridge ? 'bridge' : 'direct',
       selectedPrompt: bridge?.selectedPrompt,
       recommendedApproaches: plan.recommendedApproaches,
@@ -109,6 +166,13 @@ export async function prepareSpeak(req, res, next) {
 
     res.json({
       speakSessionId: updated.sessionId,
+      mode: updated.mode,
+      followUpEnabled: updated.followUpEnabled,
+      canonicalPrompt: updated.canonicalPrompt,
+      examinerPromptText: updated.examinerPromptText,
+      examinerPromptAudio: updated.examinerPromptAudio,
+      hintData: updated.hintData,
+      initialMessages: updated.initialMessages,
       promptSummary: updated.promptSummary,
       promptSource: updated.promptSource,
       selectedPrompt: updated.selectedPrompt,

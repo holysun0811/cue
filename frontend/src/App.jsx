@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { flushSync } from 'react-dom';
@@ -35,11 +35,20 @@ const DEFAULT_SESSION = {
   appLanguage: '',
   targetLanguage: 'en',
   promptSummary: '',
+  canonicalPrompt: '',
+  examinerPromptText: '',
+  examinerPromptAudio: '',
   promptSource: '',
   selectedPrompt: null,
   recommendedApproaches: [],
   selectedApproach: null,
   allApproachPlans: [],
+  hintData: null,
+  hintSupportLevel: 'strong_support',
+  initialMessages: [],
+  conversationMessages: [],
+  mode: 'practice',
+  followUpEnabled: false,
   extractedText: '',
   speakingPlan: [],
   roundGoal: '',
@@ -82,6 +91,18 @@ function normalizeSpeakSession(response, settings, extra = {}) {
   };
 }
 
+function firstExaminerAudioMessage(session) {
+  const initialMessage = (session.initialMessages || []).find((message) => message.role === 'examiner' && message.audioUrl);
+  if (initialMessage) return initialMessage;
+  if (session.examinerPromptAudio) {
+    return {
+      id: 'examiner_initial',
+      audioUrl: session.examinerPromptAudio
+    };
+  }
+  return null;
+}
+
 function browserLanguage() {
   const language = navigator.language || 'en';
   if (language.startsWith('zh')) return 'zh-CN';
@@ -119,6 +140,9 @@ export default function App() {
   const [speakBusy, setSpeakBusy] = useState(false);
   const [speakError, setSpeakError] = useState('');
   const [globalLoadingKey, setGlobalLoadingKey] = useState('');
+  const [practiceViewId, setPracticeViewId] = useState(0);
+  const [reviewViewId, setReviewViewId] = useState(0);
+  const practiceEntryAudioRef = useRef(null);
 
   const canPractice = useMemo(() => Boolean(session.sessionId && session.speakingPlan.length), [session]);
   const showGlobalLoading = Boolean(globalLoadingKey) || speakBusy || (bridgeBusy && step !== 'learn');
@@ -321,6 +345,11 @@ export default function App() {
       selectedPrompt: current.selectedPrompt || response.selectedPrompt,
       selectedApproach: response.selectedApproach || answerApproach,
       allApproachPlans: current.allApproachPlans,
+      initialMessages: response.initialMessages || current.initialMessages,
+      examinerPromptText: response.examinerPromptText || current.examinerPromptText,
+      examinerPromptAudio: response.examinerPromptAudio || current.examinerPromptAudio,
+      canonicalPrompt: response.canonicalPrompt || current.canonicalPrompt,
+      hintData: response.hintData || current.hintData,
       previewAudio: null
     }));
   };
@@ -346,9 +375,48 @@ export default function App() {
     setSession((current) => ({ ...current, ...patch }));
   };
 
+  const primePracticeEntryAudio = () => {
+    practiceEntryAudioRef.current?.audio?.pause();
+    practiceEntryAudioRef.current = null;
+
+    const examinerMessage = firstExaminerAudioMessage(session);
+    if (!examinerMessage?.audioUrl) return;
+
+    const audio = new Audio(examinerMessage.audioUrl);
+    const handoff = {
+      audio,
+      audioUrl: examinerMessage.audioUrl,
+      messageId: examinerMessage.id
+    };
+    practiceEntryAudioRef.current = handoff;
+    handoff.playPromise = audio.play();
+    handoff.playPromise.catch(() => {
+      if (practiceEntryAudioRef.current === handoff) {
+        practiceEntryAudioRef.current = null;
+      }
+    });
+  };
+
   const goPractice = () => {
     if (!canPractice) return;
+    primePracticeEntryAudio();
+    flushSync(() => {
+      setPracticeViewId((current) => current + 1);
+      updateSession({
+        round: 1,
+        hintLevel: 'phrases',
+        hintSupportLevel: 'strong_support',
+        conversationMessages: [],
+        latestAttempt: null,
+        latestReview: null,
+        take2Goal: ''
+      });
+    });
     navigate('/speak/practice');
+  };
+
+  const goPrepFromReview = () => {
+    navigate('/speak/prep', { replace: true });
   };
 
   const takeTwo = async () => {
@@ -358,13 +426,18 @@ export default function App() {
       recommendedHintLevel: session.latestReview?.recommendedHintLevel || session.hintLevel
     });
 
-    updateSession({
-      round: response.nextRound,
-      hintLevel: response.hintLevel,
-      take2Goal: response.take2Goal,
-      latestAttempt: null
+    flushSync(() => {
+      setPracticeViewId((current) => current + 1);
+      updateSession({
+        round: response.nextRound,
+        hintLevel: response.hintLevel,
+        take2Goal: response.take2Goal,
+        conversationMessages: [],
+        latestAttempt: null,
+        latestReview: null
+      });
     });
-    navigate('/speak/practice');
+    navigate('/speak/practice', { replace: true });
   };
 
   return (
@@ -375,7 +448,7 @@ export default function App() {
 
       <section className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <PhoneFrame overlay={<GlobalLoadingOverlay label={globalLoadingLabel} show={showGlobalLoading} />}>
-          <Header step={step} />
+          <Header onBack={step === 'review' ? goPrepFromReview : null} step={step} />
           <AnimatePresence mode="wait">
             {step === 'home' && (
               <HomeScreen
@@ -428,10 +501,14 @@ export default function App() {
             )}
             {step === 'practice' && (
               <StageScreen
-                key={`practice-${session.round}`}
+                entryAudioRef={practiceEntryAudioRef}
+                key={`practice-${session.round}-${practiceViewId}`}
                 onAttempt={(attempt) => {
-                  updateSession({ latestAttempt: attempt });
-                  navigate('/speak/review');
+                  flushSync(() => {
+                    setReviewViewId((current) => current + 1);
+                    updateSession({ latestAttempt: attempt, latestReview: null });
+                  });
+                  navigate('/speak/review', { replace: true });
                 }}
                 onSessionPatch={updateSession}
                 session={session}
@@ -439,7 +516,7 @@ export default function App() {
             )}
             {step === 'review' && (
               <ReviewScreen
-                key="review"
+                key={`review-${reviewViewId}`}
                 onReviewPatch={updateSession}
                 onTakeTwo={takeTwo}
                 session={session}

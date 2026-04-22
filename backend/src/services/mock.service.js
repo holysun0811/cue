@@ -428,6 +428,19 @@ export function mockSpeakingPlan({ taskType = 'answer_prompt', promptSummary = '
   };
 }
 
+export function mockExaminerPrompt({ promptSummary = '', targetLanguage = 'en' } = {}) {
+  const prompt = promptSummary || 'this topic';
+  const copy = {
+    en: `Let's talk about this. ${prompt} Please answer naturally and include one clear reason or example.`,
+    'zh-CN': `我们来聊聊这个题目：${prompt} 请自然回答，并加入一个清楚的理由或例子。`,
+    fr: `Parlons de ce sujet. ${prompt} Reponds naturellement avec une raison ou un exemple clair.`,
+    de: `Sprechen wir ueber dieses Thema. ${prompt} Antworte natuerlich und gib einen klaren Grund oder ein Beispiel.`,
+    es: `Hablemos de este tema. ${prompt} Responde de forma natural con una razon o un ejemplo claro.`
+  };
+
+  return copy[languageKey(targetLanguage)] || copy.en;
+}
+
 export function mockLearnStart({ topicOrMaterial = '', appLanguage = 'zh-CN', targetLanguage = 'en', persona = { type: 'guide', name: '' } }) {
   const title = topicTitleFromInput(topicOrMaterial);
   const personaName = persona?.name || (persona?.type === 'expert' ? 'a topic expert' : 'your learning guide');

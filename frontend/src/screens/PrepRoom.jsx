@@ -1,17 +1,80 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronDown, Headphones, ImagePlus, Mic, Sparkles, X } from 'lucide-react';
+import { Check, Headphones, ImagePlus, Mic, Sparkles, X } from 'lucide-react';
 import { previewSampleAnswerAudio } from '../api/client.js';
 import BottomSheet from '../components/common/BottomSheet.jsx';
 import StickyCTA from '../components/common/StickyCTA.jsx';
 import { createSpeechRecognition, fileToDataUrl } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
 
-function PlanSection({ item, index }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
+function highlightedPlanText(text = '', keyword = '') {
+  const normalizedKeyword = keyword.trim();
+  if (!normalizedKeyword) return text;
+
+  const directRegex = new RegExp(escapeRegExp(normalizedKeyword), /[\u4e00-\u9fff]/.test(normalizedKeyword) ? 'g' : 'gi');
+  const directMatch = directRegex.exec(text);
+  if (directMatch) {
+    const start = directMatch.index;
+    const end = start + directMatch[0].length;
+    return [
+      text.slice(0, start),
+      <mark className="rounded-md bg-violet-100 px-1 font-black text-violet-700" key="keyword">
+        {text.slice(start, end)}
+      </mark>,
+      text.slice(end)
+    ];
+  }
+
+  const keywordParts = normalizedKeyword
+    .split(/[\s,，;；/]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 2)
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 2);
+  const matches = [];
+  const occupied = [];
+
+  keywordParts.forEach((part) => {
+    const regex = new RegExp(escapeRegExp(part), /[\u4e00-\u9fff]/.test(part) ? 'g' : 'gi');
+    let match;
+    while ((match = regex.exec(text))) {
+      const start = match.index;
+      const end = start + match[0].length;
+      const overlaps = occupied.some(([takenStart, takenEnd]) => start < takenEnd && end > takenStart);
+      if (!overlaps) {
+        matches.push({ start, end });
+        occupied.push([start, end]);
+      }
+      break;
+    }
+  });
+
+  if (!matches.length) return text;
+
+  matches.sort((a, b) => a.start - b.start);
+  const parts = [];
+  let cursor = 0;
+
+  matches.forEach((match, index) => {
+    if (cursor < match.start) parts.push(text.slice(cursor, match.start));
+    parts.push(
+      <mark className="rounded-md bg-violet-100 px-1 font-black text-violet-700" key={`${match.start}-${index}`}>
+        {text.slice(match.start, match.end)}
+      </mark>
+    );
+    cursor = match.end;
+  });
+
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
+}
+
+function PlanSection({ item, index }) {
   return (
     <motion.div
       className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_10px_22px_rgba(99,102,241,0.08)]"
@@ -24,15 +87,7 @@ function PlanSection({ item, index }) {
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold leading-snug text-slate-800">{item.text}</p>
-          <p className="mt-1 text-xs font-black text-indigo-600">{item.keyword}</p>
-          {item.supportText && (
-            <button className="mt-2 flex items-center gap-1 text-[11px] font-bold text-slate-400" onClick={() => setOpen((value) => !value)} type="button">
-              <ChevronDown className={open ? 'rotate-180 transition' : 'transition'} size={13} />
-              {t('prep.support')}
-            </button>
-          )}
-          {open && <p className="mt-2 rounded-xl bg-slate-50 p-2 text-xs leading-relaxed text-slate-500">{item.supportText}</p>}
+          <p className="text-sm font-bold leading-snug text-slate-800">{highlightedPlanText(item.text, item.keyword)}</p>
         </div>
       </div>
     </motion.div>
@@ -141,6 +196,35 @@ function splitSampleAnswer(text = '') {
   }
 
   return sentences.flatMap((sentence) => splitLongCaptionSentence(sentence));
+}
+
+function languageKey(language = 'en') {
+  if (language?.startsWith('zh')) return 'zh-CN';
+  if (language?.startsWith('fr')) return 'fr';
+  if (language?.startsWith('de')) return 'de';
+  if (language?.startsWith('es')) return 'es';
+  return 'en';
+}
+
+function buildPracticeHintData({ speakingPlan = [], appLanguage = 'en' } = {}) {
+  const outlineCopy = {
+    en: ['Open with your direct answer.', 'Add one reason or fact.', 'Finish with a short conclusion.'],
+    'zh-CN': ['先直接回答题目。', '加入一个理由或事实。', '用一句简短结论收尾。'],
+    fr: ['Commence par une reponse directe.', 'Ajoute une raison ou un fait.', 'Termine avec une conclusion courte.'],
+    de: ['Beginne mit einer direkten Antwort.', 'Fuege einen Grund oder Fakt hinzu.', 'Schliesse kurz ab.'],
+    es: ['Empieza con una respuesta directa.', 'Anade una razon o un dato.', 'Termina con una conclusion corta.']
+  };
+  const appKey = languageKey(appLanguage);
+
+  return {
+    scale: {
+      supportedLevels: ['none', 'keywords', 'outline', 'strong_support'],
+      defaultLevel: 'outline'
+    },
+    outline: outlineCopy[appKey] || outlineCopy.en,
+    phrases: speakingPlan.map((item) => item.text).filter(Boolean).slice(0, 3),
+    keywords: speakingPlan.map((item) => item.keyword).filter(Boolean).slice(0, 3)
+  };
 }
 
 function captionIndexForTime(sentences, currentTime, duration) {
@@ -457,16 +541,13 @@ export default function PrepRoom({ errorKey, loading, onApproachChange, onPrepar
       const planById = session.allApproachPlans?.find((p) => p.approachId === approach.id);
       const plan = planByIndex ?? planById;
 
-      console.log('[changeApproach] clicked:', approach.id, approach.label);
-      console.log('  recommendedApproaches IDs:', session.recommendedApproaches?.map((a) => a.id));
-      console.log('  allApproachPlans approachIds:', session.allApproachPlans?.map((p) => p.approachId));
-      console.log('  approachIndex:', approachIndex, '| planByIndex?', !!planByIndex, '| planById?', !!planById);
-      console.log('  resolved plan texts:', plan?.speakingPlan?.map((s) => s.text));
-      console.log('  current session.speakingPlan texts:', session.speakingPlan?.map((s) => s.text));
-
       onSessionPatch({
         selectedApproach: approach,
         speakingPlan: plan?.speakingPlan ?? session.speakingPlan,
+        hintData: buildPracticeHintData({
+          speakingPlan: plan?.speakingPlan ?? session.speakingPlan,
+          appLanguage: session.appLanguage
+        }),
         previewAudio: null
       });
       return;

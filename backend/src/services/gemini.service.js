@@ -1,4 +1,4 @@
-import { mockBridge, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
+import { mockBridge, mockExaminerPrompt, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
 
 function hasGeminiKey() {
   return Boolean(process.env.GEMINI_API_KEY);
@@ -373,6 +373,43 @@ Rules:
     };
   } catch {
     return mockSpeakingPlan({ taskType, promptSummary, appLanguage, targetLanguage, answerApproach });
+  }
+}
+
+export async function generateExaminerPrompt(payload = {}) {
+  const { promptSummary = '', targetLanguage = 'en' } = payload;
+
+  if (!hasGeminiKey()) {
+    return mockExaminerPrompt({ promptSummary, targetLanguage });
+  }
+
+  const prompt = `
+You are a calm school speaking examiner.
+Turn the canonical prompt below into one natural spoken examiner question.
+
+Canonical prompt:
+${promptSummary}
+
+Practice language:
+${targetLanguage}
+
+Return strict JSON:
+{
+  "examinerPromptText": "one natural examiner message in the practice language"
+}
+
+Rules:
+- Use the practice language only.
+- Keep the original task requirement.
+- Sound like a real examiner or teacher, not a mechanical prompt reader.
+- Keep it concise enough to be spoken aloud.
+`;
+
+  try {
+    const parsed = await generateJson(prompt);
+    return parsed.examinerPromptText || mockExaminerPrompt({ promptSummary, targetLanguage });
+  } catch {
+    return mockExaminerPrompt({ promptSummary, targetLanguage });
   }
 }
 
