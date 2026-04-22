@@ -1,3 +1,6 @@
+import { MOCK_AUDIO_URL } from './mock.service.js';
+import { toTtsLanguageCode } from '../utils/language.js';
+
 function buildPreviewScript(cards = [], locale = 'zh-CN') {
   const topCards = cards.slice(0, 3);
   const keywords = topCards.map((card) => card.keyword).filter(Boolean);
@@ -15,9 +18,14 @@ function buildPreviewScript(cards = [], locale = 'zh-CN') {
 
 async function synthesizeWithGoogle({ text, languageCode = 'en-US' }) {
   if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS is required for text-to-speech.');
+    return {
+      audioUrl: MOCK_AUDIO_URL,
+      mimeType: 'audio/wav',
+      mocked: true
+    };
   }
 
+  // TODO: Replace with your production Google Cloud auth setup if not using ADC.
   const textToSpeech = await import('@google-cloud/text-to-speech');
   const client = new textToSpeech.TextToSpeechClient();
   const [response] = await client.synthesizeSpeech({
@@ -31,7 +39,8 @@ async function synthesizeWithGoogle({ text, languageCode = 'en-US' }) {
 
   return {
     audioUrl: `data:audio/mpeg;base64,${response.audioContent.toString('base64')}`,
-    mimeType: 'audio/mpeg'
+    mimeType: 'audio/mpeg',
+    mocked: false
   };
 }
 
@@ -49,16 +58,32 @@ export async function createPreviewAudio({ cards = [], locale = 'zh-CN' }) {
   };
 }
 
-export async function createSpeechAudio({ text }) {
+export async function createSpeechAudio({ text, languageCode = 'en-US' }) {
   if (!text) {
-    throw new Error('Text is required for text-to-speech.');
+    return {
+      script: '',
+      audioUrl: MOCK_AUDIO_URL,
+      mimeType: 'audio/wav'
+    };
   }
 
   const script = text;
-  const audio = await synthesizeWithGoogle({ text: script, languageCode: 'en-US' });
+  const audio = await synthesizeWithGoogle({ text: script, languageCode });
 
   return {
     script,
+    audioUrl: audio.audioUrl,
+    mimeType: audio.mimeType
+  };
+}
+
+export async function synthesizeText({ text, language = 'en' }) {
+  const audio = await synthesizeWithGoogle({
+    text,
+    languageCode: toTtsLanguageCode(language)
+  });
+
+  return {
     audioUrl: audio.audioUrl,
     mimeType: audio.mimeType
   };

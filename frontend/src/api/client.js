@@ -9,46 +9,8 @@ async function parseJsonResponse(response) {
   return response.json();
 }
 
-export async function streamCueCards(payload, handlers) {
-  const response = await fetch(`${API_BASE_URL}/ai/cue-cards/stream`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok || !response.body) {
-    throw new Error(`Cue stream failed with status ${response.status}`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split('\n\n');
-    buffer = events.pop() || '';
-
-    for (const rawEvent of events) {
-      const lines = rawEvent.split('\n');
-      const eventName = lines.find((line) => line.startsWith('event:'))?.replace('event:', '').trim();
-      const dataLine = lines.find((line) => line.startsWith('data:'))?.replace('data:', '').trim();
-
-      if (!eventName || !dataLine) continue;
-
-      const payloadData = JSON.parse(dataLine);
-      handlers?.onEvent?.(eventName, payloadData);
-    }
-  }
-}
-
-export async function requestPreviewAudio(payload) {
-  const response = await fetch(`${API_BASE_URL}/voice/preview`, {
+export async function analyzeInput(payload) {
+  const response = await fetch(`${API_BASE_URL}/input/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -57,8 +19,8 @@ export async function requestPreviewAudio(payload) {
   return parseJsonResponse(response);
 }
 
-export async function requestPerfectAudio(payload) {
-  const response = await fetch(`${API_BASE_URL}/voice/perfect`, {
+export async function startLearnSession(payload) {
+  const response = await fetch(`${API_BASE_URL}/learn/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -67,8 +29,8 @@ export async function requestPerfectAudio(payload) {
   return parseJsonResponse(response);
 }
 
-export async function requestReview(payload) {
-  const response = await fetch(`${API_BASE_URL}/ai/review`, {
+export async function sendLearnMessage(payload) {
+  const response = await fetch(`${API_BASE_URL}/learn/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -77,16 +39,61 @@ export async function requestReview(payload) {
   return parseJsonResponse(response);
 }
 
-export async function requestTranscription(audioBlob) {
-  const formData = new FormData();
-  if (audioBlob) {
-    formData.append('audio', audioBlob, 'answer.webm');
-  }
-  formData.append('languageCode', 'en-US');
-
-  const response = await fetch(`${API_BASE_URL}/voice/stt`, {
+export async function generateBridge(payload) {
+  const response = await fetch(`${API_BASE_URL}/bridge/generate`, {
     method: 'POST',
-    body: formData
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function prepareSpeak(payload) {
+  const response = await fetch(`${API_BASE_URL}/speak/prepare`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function previewSampleAnswerAudio(payload) {
+  const response = await fetch(`${API_BASE_URL}/audio/preview`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function submitPractice(payload) {
+  const response = await fetch(`${API_BASE_URL}/speak/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function generateReview(payload) {
+  const response = await fetch(`${API_BASE_URL}/review/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function requestTake2(payload) {
+  const response = await fetch(`${API_BASE_URL}/speak/take2`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   });
 
   return parseJsonResponse(response);

@@ -1,141 +1,206 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Film, Play, Sparkles } from 'lucide-react';
-import { requestPerfectAudio, requestReview } from '../api/client.js';
-import RadarScore from '../components/RadarScore.jsx';
+import { Sparkles, Target } from 'lucide-react';
+import { generateReview } from '../api/client.js';
+import AudioButton from '../components/common/AudioButton.jsx';
+import StickyCTA from '../components/common/StickyCTA.jsx';
 import { pageTransition } from '../lib/motion.js';
 
-export default function ReviewScreen({ cueCards, transcript, intent, onTakeTwo }) {
+function Skeleton({ className }) {
+  return <div className={`animate-pulse rounded-2xl bg-slate-100 ${className}`} />;
+}
+
+function LoadingView({ promptSummary, t }) {
+  return (
+    <div className="space-y-3">
+      {promptSummary && (
+        <div className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-2.5">
+          <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-500">{promptSummary}</p>
+        </div>
+      )}
+      <div className="rounded-[22px] border border-sky-100 bg-sky-50/80 p-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-sky-600" />
+          <div>
+            <p className="text-sm font-black text-sky-700">{t('review.loadingTitle')}</p>
+            <p className="mt-0.5 text-xs font-bold text-sky-500">{t('review.loadingHint')}</p>
+          </div>
+        </div>
+      </div>
+      <Skeleton className="h-[88px]" />
+      <Skeleton className="h-[72px]" />
+      <Skeleton className="h-[52px]" />
+    </div>
+  );
+}
+
+function ScoreRow({ label, value }) {
+  return (
+    <div className="grid grid-cols-[88px_1fr_28px] items-center gap-2">
+      <span className="text-xs font-bold text-slate-500">{label}</span>
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400"
+          style={{ width: `${value || 0}%` }}
+        />
+      </div>
+      <span className="text-right text-xs font-black text-sky-600">{value || 0}</span>
+    </div>
+  );
+}
+
+export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
   const { t } = useTranslation();
-  const [review, setReview] = useState(null);
-  const [audio, setAudio] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [review, setReview] = useState(session.latestReview);
+  const [loading, setLoading] = useState(!session.latestReview);
   const [error, setError] = useState('');
-  const audioRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
 
-    const loadReview = async () => {
+    const load = async () => {
+      if (!session.latestAttempt || session.latestReview) return;
       setLoading(true);
       setError('');
-      const reviewResponse = await requestReview({ transcript, cueCards, intent });
-      if (!alive) return;
-      setReview(reviewResponse);
-      const audioResponse = await requestPerfectAudio({ text: reviewResponse.perfect });
-      if (!alive) return;
-      setAudio(audioResponse);
-      setLoading(false);
+
+      try {
+        const response = await generateReview({
+          speakSessionId: session.sessionId,
+          attemptId: session.latestAttempt.attemptId,
+          taskType: session.taskType,
+          promptSummary: session.promptSummary,
+          appLanguage: session.appLanguage,
+          targetLanguage: session.targetLanguage,
+          speakingPlan: session.speakingPlan,
+          transcript: session.latestAttempt.transcript,
+          round: session.round
+        });
+
+        if (!alive) return;
+        setReview(response);
+        onReviewPatch({ latestReview: response, take2Goal: response.take2Goal });
+      } catch {
+        if (!alive) return;
+        setError(t('review.error'));
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
 
-    loadReview().catch(() => {
-      setError(t('review.error'));
-      setLoading(false);
-    });
-
+    load();
     return () => {
       alive = false;
     };
-  }, [cueCards, intent, transcript]);
+  }, [onReviewPatch, session, t]);
 
-  const playPerfect = () => {
-    audioRef.current?.play?.();
-  };
-
-  const highlightedPerfect = review?.perfect?.split(' ').map((word, index) => {
-    const isAccent = ['Actually,', 'turning', 'mass', 'production', 'harsh', 'changed', 'forever.'].some((token) =>
-      word.toLowerCase().includes(token.toLowerCase().replace('.', '').replace(',', ''))
-    );
-
-    return (
-      <span className={isAccent ? 'text-cue-cyan drop-shadow-[0_0_12px_rgba(0,240,255,0.45)]' : ''} key={`${word}-${index}`}>
-        {word}{' '}
-      </span>
-    );
-  });
+  const primaryFix = review?.topIssues?.[0];
+  const otherFixes = review?.topIssues?.slice(1) ?? [];
+  const scoreItems = ['fluency', 'vocabulary', 'pronunciation', 'structure'];
 
   return (
-    <motion.section
-      className="relative flex min-h-0 flex-1 flex-col px-5 pb-0 pt-5"
-      {...pageTransition}
-    >
-      <div>
-        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-cue-cyan">
-          <Sparkles size={13} />
-          {t('review.eyebrow')}
-        </p>
-        <h2 className="mt-2 text-[34px] font-black leading-tight tracking-tight text-gray-100">{t('review.title')}</h2>
-      </div>
+    <motion.section className="relative flex min-h-0 flex-1 flex-col overflow-hidden" {...pageTransition}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-28 pt-5">
+        {/* Title — icon + main title only, no separate eyebrow row */}
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="shrink-0 text-violet-500" size={15} />
+          <h2 className="text-xl font-black tracking-tight text-slate-950">{t('review.title')}</h2>
+        </div>
 
-      <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pb-32 pr-1">
-        {loading && (
-          <div className="rounded-3xl border border-cue-cyan/20 bg-cue-cyan/10 p-4 text-center text-sm font-bold text-cue-cyan backdrop-blur-xl">
-            {t('review.loading')}
-          </div>
-        )}
+        {/* State A: loading */}
+        {loading && <LoadingView promptSummary={session.promptSummary} t={t} />}
+
+        {/* Error */}
         {error && (
-          <div className="rounded-3xl border border-cue-pink/20 bg-cue-pink/10 p-4 text-center text-sm font-bold text-cue-pink backdrop-blur-xl">
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-center text-sm font-black text-rose-500">
             {error}
           </div>
         )}
 
+        {/* State B: loaded */}
         {review && (
-          <>
-            <RadarScore scores={review.scores} />
-            <div className="rounded-3xl border border-white/5 bg-[#18181B]/78 p-4 shadow-[0_18px_48px_rgba(0,0,0,0.32)] backdrop-blur-xl">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-cue-pink">{t('review.clunky')}</p>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">{review.original}</p>
-              <div className="my-4 h-px bg-white/10" />
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-cue-cyan">{t('review.native')}</p>
-              <p className="mt-2 text-base leading-relaxed tracking-tight text-gray-100">{highlightedPerfect}</p>
-            </div>
-            <div className="rounded-2xl border border-cue-purple/20 bg-cue-purple/10 p-3 text-sm leading-relaxed text-gray-300 backdrop-blur-xl">
-              {review.feedback}
+          <div className="space-y-3">
+            {/* Prompt context */}
+            {session.promptSummary && (
+              <div className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-2.5">
+                <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-500">
+                  {session.promptSummary}
+                </p>
+              </div>
+            )}
+
+            {/* Primary fix */}
+            {primaryFix && (
+              <div className="rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 to-sky-50 p-4 shadow-[0_10px_22px_rgba(99,102,241,0.1)]">
+                <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-violet-500">
+                  <Target size={12} />
+                  {t('review.topFixLabel')}
+                </p>
+                <p className="text-[15px] font-black leading-snug text-slate-900">{primaryFix}</p>
+                {review.summary && (
+                  <p className="mt-2.5 text-xs font-bold leading-relaxed text-slate-600">{review.summary}</p>
+                )}
+              </div>
+            )}
+
+            {/* Better Version */}
+            <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.09)] backdrop-blur-xl">
+              <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.betterVersion')}</p>
+              <p className="text-sm leading-relaxed text-slate-700">{review.betterVersion?.text}</p>
+              {review.betterVersion?.audioUrl && (
+                <div className="mt-3">
+                  <AudioButton audioUrl={review.betterVersion.audioUrl} label={t('review.playBetter')} />
+                </div>
+              )}
             </div>
 
-            <div className="rounded-[28px] border border-white/5 bg-[linear-gradient(135deg,rgba(157,78,221,0.24),rgba(24,24,27,0.92)_44%,rgba(0,240,255,0.16))] p-4 shadow-purple backdrop-blur-xl">
-              <div className="flex items-center gap-4">
-                <motion.button
-                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-black shadow-[0_0_32px_rgba(255,255,255,0.16)] disabled:opacity-40"
-                  disabled={!audio || !review}
-                  onClick={playPerfect}
-                  type="button"
-                  whileTap={{ scale: 0.92 }}
-                >
-                  <Play size={26} fill="currentColor" />
-                </motion.button>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-cue-cyan">Perfect Track</p>
-                  <p className="mt-1 truncate text-lg font-black tracking-tight text-gray-100">{t('review.title')}</p>
-                  <div className="mt-3 flex h-7 items-end gap-1">
-                    {[18, 26, 14, 28, 20, 32, 16, 24, 12].map((height, index) => (
-                      <span className="w-1.5 rounded-full bg-cue-cyan/80" key={`${height}-${index}`} style={{ height }} />
-                    ))}
-                  </div>
+            {/* Other fixes — always expanded */}
+            {otherFixes.length > 0 && (
+              <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.08)] backdrop-blur-xl">
+                <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.otherNotes')}</p>
+                <div className="space-y-2">
+                  {otherFixes.map((fix, i) => (
+                    <p
+                      className="rounded-2xl bg-slate-50 px-3 py-2.5 text-sm font-bold leading-snug text-slate-700"
+                      key={i}
+                    >
+                      {i + 2}. {fix}
+                    </p>
+                  ))}
                 </div>
               </div>
-              <button
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-sm font-black text-gray-100 backdrop-blur-xl disabled:opacity-40"
-                disabled={!audio || !review}
-                onClick={playPerfect}
-                type="button"
-              >
-                <Play size={15} fill="currentColor" />
-                {t('review.playPerfect')}
-              </button>
+            )}
+
+            {/* Top Version + scores — always expanded */}
+            <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.08)] backdrop-blur-xl">
+              <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.topVersion')}</p>
+              <p className="text-sm leading-relaxed text-slate-700">{review.topVersion?.text}</p>
+              {review.topVersion?.audioUrl && (
+                <div className="mt-3">
+                  <AudioButton audioUrl={review.topVersion.audioUrl} label={t('review.playTop')} />
+                </div>
+              )}
+              {review.scores && (
+                <div className="mt-4 space-y-2">
+                  <p className="mb-1 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                    {t('review.scores')}
+                  </p>
+                  {scoreItems.map((item) => (
+                    <ScoreRow key={item} label={t(`review.metrics.${item}`)} value={review.scores[item]} />
+                  ))}
+                </div>
+              )}
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/5 bg-black/45 px-5 pb-5 pt-3 backdrop-blur-xl">
-        <audio ref={audioRef} src={audio?.audioUrl} />
-        <motion.button className="flex w-full items-center justify-center gap-2 rounded-[22px] bg-gradient-to-r from-cue-purple via-cue-pink to-cue-cyan py-4 text-base font-black tracking-tight text-white shadow-[0_18px_54px_rgba(255,45,149,0.28)]" onClick={onTakeTwo} type="button" whileTap={{ scale: 0.97 }}>
-          <Film size={18} />
+      {/* CTA — only appears after review loads, no helper text */}
+      {review && (
+        <StickyCTA onClick={onTakeTwo}>
           {t('review.takeTwo')}
-        </motion.button>
-      </div>
+        </StickyCTA>
+      )}
     </motion.section>
   );
 }

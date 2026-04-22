@@ -1,92 +1,448 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { flushSync } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { analyzeInput, generateBridge, prepareSpeak, requestTake2, sendLearnMessage, startLearnSession } from './api/client.js';
+import i18n from './i18n.js';
 import PhoneFrame from './components/PhoneFrame.jsx';
 import Header from './components/Header.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
+import LearnScreen from './screens/LearnScreen.jsx';
+import BridgeScreen from './screens/BridgeScreen.jsx';
 import PrepRoom from './screens/PrepRoom.jsx';
 import StageScreen from './screens/StageScreen.jsx';
 import ReviewScreen from './screens/ReviewScreen.jsx';
+import SettingsScreen from './screens/SettingsScreen.jsx';
+import GlobalLoadingOverlay from './components/common/GlobalLoadingOverlay.jsx';
 
-const INITIAL_INPUT = {
-  nativeThought: '',
-  imageDataUrl: '',
-  imageName: ''
+function stepFromPath(pathname) {
+  if (pathname === '/') return 'home';
+  if (pathname === '/settings') return 'settings';
+  if (pathname === '/learn' || pathname.startsWith('/learn/')) return 'learn';
+  if (pathname === '/bridge') return 'bridge';
+  if (pathname === '/speak/prep') return 'prep';
+  if (pathname === '/speak/practice') return 'practice';
+  if (pathname === '/speak/review') return 'review';
+  return 'home';
+}
+
+const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'fr', 'de', 'es'];
+
+const DEFAULT_SESSION = {
+  sessionId: '',
+  taskType: '',
+  appLanguage: '',
+  targetLanguage: 'en',
+  promptSummary: '',
+  promptSource: '',
+  selectedPrompt: null,
+  recommendedApproaches: [],
+  selectedApproach: null,
+  allApproachPlans: [],
+  extractedText: '',
+  speakingPlan: [],
+  roundGoal: '',
+  round: 1,
+  hintLevel: 'phrases',
+  latestAttempt: null,
+  latestReview: null,
+  take2Goal: '',
+  originalInput: null
 };
 
-const STEP_BY_PATH = {
-  '/': 'home',
-  '/prep': 'prep',
-  '/stage': 'stage',
-  '/review': 'review'
+const DEFAULT_LEARN_SESSION = {
+  learnSessionId: '',
+  title: '',
+  topicOrMaterial: '',
+  persona: {
+    type: 'guide',
+    name: ''
+  },
+  chatHistory: [],
+  suggestedQuestions: [],
+  collectedState: {
+    keyFacts: [],
+    viewpoints: [],
+    targetTerms: [],
+    possibleQuestionAngles: []
+  }
 };
+
+function normalizeSpeakSession(response, settings, extra = {}) {
+  return {
+    ...DEFAULT_SESSION,
+    ...response,
+    sessionId: response.speakSessionId || response.sessionId,
+    appLanguage: settings.uiLanguage,
+    targetLanguage: settings.targetLanguage,
+    round: 1,
+    hintLevel: 'phrases',
+    ...extra
+  };
+}
+
+function browserLanguage() {
+  const language = navigator.language || 'en';
+  if (language.startsWith('zh')) return 'zh-CN';
+  if (language.startsWith('fr')) return 'fr';
+  if (language.startsWith('de')) return 'de';
+  if (language.startsWith('es')) return 'es';
+  return 'en';
+}
+
+function savedLanguage(key, fallback) {
+  const saved = window.localStorage.getItem(key);
+  return SUPPORTED_LANGUAGES.includes(saved) ? saved : fallback;
+}
 
 export default function App() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const step = STEP_BY_PATH[location.pathname] || 'home';
-  const [hookInput, setHookInput] = useState(INITIAL_INPUT);
-  const [cueCards, setCueCards] = useState([]);
-  const [intent, setIntent] = useState('');
-  const [transcript, setTranscript] = useState('');
-  const [attempt, setAttempt] = useState(1);
+  const step = stepFromPath(location.pathname);
+  const isNewLearnRoute = location.pathname === '/learn';
+  const [settings, setSettings] = useState(() => ({
+    uiLanguage: i18n.language,
+    targetLanguage: savedLanguage('cue-target-language', 'en')
+  }));
+  const [learnSession, setLearnSession] = useState(DEFAULT_LEARN_SESSION);
+  const [bridgeData, setBridgeData] = useState(null);
+  const [session, setSession] = useState(() => ({
+    ...DEFAULT_SESSION,
+    appLanguage: settings.uiLanguage,
+    targetLanguage: settings.targetLanguage
+  }));
+  const [learnBusy, setLearnBusy] = useState(false);
+  const [learnError, setLearnError] = useState('');
+  const [bridgeBusy, setBridgeBusy] = useState(false);
+  const [speakBusy, setSpeakBusy] = useState(false);
+  const [speakError, setSpeakError] = useState('');
+  const [globalLoadingKey, setGlobalLoadingKey] = useState('');
 
-  const startPrep = (input) => {
-    setHookInput(input);
-    setCueCards([]);
-    setIntent('');
-    setTranscript('');
-    setAttempt(1);
-    navigate('/prep');
+  const canPractice = useMemo(() => Boolean(session.sessionId && session.speakingPlan.length), [session]);
+  const showGlobalLoading = Boolean(globalLoadingKey) || speakBusy || (bridgeBusy && step !== 'learn');
+  const globalLoadingLabel = globalLoadingKey ? t(globalLoadingKey) : speakBusy ? t('loading.preparingSpeak') : t('loading.working');
+
+  useEffect(() => {
+    window.localStorage.setItem('cue-target-language', settings.targetLanguage);
+  }, [settings.targetLanguage]);
+
+  const startLearn = () => {
+    setBridgeData(null);
+    setLearnError('');
+    navigate('/learn');
   };
 
-  const takeTwo = () => {
-    setTranscript('');
-    setAttempt((current) => current + 1);
-    navigate('/stage');
+  const startSpeak = () => {
+    navigate('/speak/prep');
+  };
+
+  const continueLearn = () => {
+    if (!learnSession.learnSessionId) return;
+    navigate(`/learn/${learnSession.learnSessionId}`);
+  };
+
+  const startLearnFlow = async (input) => {
+    setLearnBusy(true);
+    setLearnError('');
+    setBridgeData(null);
+    try {
+      const analysis = input.imageBase64
+        ? await analyzeInput({
+            text: input.topicOrMaterial,
+            imageBase64: input.imageBase64,
+            appLanguage: settings.uiLanguage,
+            targetLanguage: settings.targetLanguage
+          })
+        : null;
+      const response = await startLearnSession({
+        ...input,
+        topicOrMaterial: analysis?.extractedText || input.topicOrMaterial,
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage
+      });
+      setLearnSession({
+        learnSessionId: response.learnSessionId,
+        title: response.title,
+        topicOrMaterial: analysis?.extractedText || input.topicOrMaterial,
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage,
+        persona: response.persona || input.persona,
+        suggestedQuestions: response.suggestedQuestions || [],
+        chatHistory: [
+          ...(input.starterMessage ? [{ role: 'assistant', content: input.starterMessage }] : []),
+          { role: 'user', content: analysis?.promptSummary || analysis?.extractedText || input.topicOrMaterial || 'Material attached' },
+          { role: 'assistant', content: response.openingMessage }
+        ],
+        collectedState: response.collectedState || DEFAULT_LEARN_SESSION.collectedState
+      });
+      navigate(`/learn/${response.learnSessionId}`);
+    } catch {
+      setLearnError('learn.startError');
+    } finally {
+      setLearnBusy(false);
+    }
+  };
+
+  const sendLearnThought = async (input) => {
+    if (!learnSession.learnSessionId) return;
+    const rawMessage = typeof input === 'string' ? input : input.message;
+    setLearnBusy(true);
+    setLearnError('');
+    setLearnSession((current) => ({
+      ...current,
+      chatHistory: [...(current.chatHistory || []), { role: 'user', content: rawMessage || 'Material attached' }]
+    }));
+    try {
+      const analysis = typeof input === 'object' && input.imageBase64
+        ? await analyzeInput({
+            text: rawMessage,
+            imageBase64: input.imageBase64,
+            appLanguage: settings.uiLanguage,
+            targetLanguage: settings.targetLanguage
+          })
+        : null;
+      const response = await sendLearnMessage({
+        learnSessionId: learnSession.learnSessionId,
+        message: analysis?.extractedText || analysis?.promptSummary || rawMessage,
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage
+      });
+      setLearnSession((current) => ({
+        ...current,
+        chatHistory: [...(current.chatHistory || []), { role: 'assistant', content: response.assistantMessage }],
+        collectedState: response.collectedState || current.collectedState,
+        canBridge: response.canBridge
+      }));
+    } catch {
+      setLearnError('learn.messageError');
+    } finally {
+      setLearnBusy(false);
+    }
+  };
+
+  const prepareBridgeSpeak = async (bridge, selectedPrompt = null, answerApproach = null) => {
+    if (!bridge?.bridgeId) return;
+    const response = await prepareSpeak({
+      entryType: 'bridge',
+      bridgeId: bridge.bridgeId,
+      selectedPrompt,
+      answerApproach,
+      appLanguage: settings.uiLanguage,
+      targetLanguage: settings.targetLanguage
+    });
+    setSession(normalizeSpeakSession(response, settings, {
+      originalInput: { entryType: 'bridge', bridgeId: bridge.bridgeId, selectedPrompt },
+      promptSource: 'bridge',
+      selectedPrompt: selectedPrompt || response.selectedPrompt,
+      selectedApproach: response.selectedApproach || answerApproach
+    }));
+    navigate('/speak/prep');
+  };
+
+  const buildBridge = async (selectedPrompt = null) => {
+    if (!learnSession.learnSessionId) return;
+    flushSync(() => {
+      setGlobalLoadingKey(selectedPrompt ? 'loading.preparingSpeak' : 'loading.working');
+      setBridgeBusy(true);
+    });
+    setLearnError('');
+    setSpeakError('');
+    try {
+      const bridge = await generateBridge({
+        learnSessionId: learnSession.learnSessionId,
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage
+      });
+      setBridgeData(bridge);
+      if (selectedPrompt) {
+        await prepareBridgeSpeak(bridge, selectedPrompt);
+      } else {
+        navigate('/bridge');
+      }
+    } catch {
+      setLearnError(selectedPrompt ? 'prep.prepareError' : 'bridge.error');
+    } finally {
+      setBridgeBusy(false);
+      setGlobalLoadingKey('');
+    }
+  };
+
+  const prepareDirectSpeak = async (taskInput) => {
+    flushSync(() => {
+      setGlobalLoadingKey('loading.preparingSpeak');
+      setSpeakBusy(true);
+    });
+    setSpeakError('');
+    try {
+      const analysis = await analyzeInput({
+        taskType: 'answer_prompt',
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage,
+        text: taskInput.text,
+        imageBase64: taskInput.imageBase64,
+        audioBase64: taskInput.audioBase64
+      });
+      const response = await prepareSpeak({
+        entryType: 'direct',
+        taskInput: {
+          ...taskInput,
+          text: analysis.promptSummary || taskInput.text
+        },
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage
+      });
+      setSession(normalizeSpeakSession(response, settings, { originalInput: { entryType: 'direct', taskInput } }));
+    } catch {
+      setSpeakError('prep.prepareError');
+    } finally {
+      setSpeakBusy(false);
+      setGlobalLoadingKey('');
+    }
+  };
+
+  // Only called for custom approach — recommended switches are handled locally in PrepRoom.
+  const updateSpeakApproach = async (answerApproach) => {
+    if (!session.originalInput) return;
+    setSpeakError('');
+    const response = await prepareSpeak({
+      entryType: session.originalInput.entryType || 'direct',
+      bridgeId: session.originalInput.bridgeId,
+      selectedPrompt: session.originalInput.selectedPrompt || session.selectedPrompt,
+      taskInput: session.originalInput.taskInput,
+      answerApproach,
+      appLanguage: settings.uiLanguage,
+      targetLanguage: settings.targetLanguage
+    });
+    setSession((current) => normalizeSpeakSession(response, settings, {
+      originalInput: current.originalInput,
+      promptSource: current.promptSource,
+      selectedPrompt: current.selectedPrompt || response.selectedPrompt,
+      selectedApproach: response.selectedApproach || answerApproach,
+      allApproachPlans: current.allApproachPlans,
+      previewAudio: null
+    }));
+  };
+
+  const practiceBridge = async (selectedPrompt = null) => {
+    if (!bridgeData?.bridgeId) return;
+    flushSync(() => {
+      setGlobalLoadingKey('loading.preparingSpeak');
+      setSpeakBusy(true);
+    });
+    setSpeakError('');
+    try {
+      await prepareBridgeSpeak(bridgeData, selectedPrompt);
+    } catch {
+      setSpeakError('prep.prepareError');
+    } finally {
+      setSpeakBusy(false);
+      setGlobalLoadingKey('');
+    }
+  };
+
+  const updateSession = (patch) => {
+    setSession((current) => ({ ...current, ...patch }));
+  };
+
+  const goPractice = () => {
+    if (!canPractice) return;
+    navigate('/speak/practice');
+  };
+
+  const takeTwo = async () => {
+    const response = await requestTake2({
+      speakSessionId: session.sessionId,
+      previousRound: session.round,
+      recommendedHintLevel: session.latestReview?.recommendedHintLevel || session.hintLevel
+    });
+
+    updateSession({
+      round: response.nextRound,
+      hintLevel: response.hintLevel,
+      take2Goal: response.take2Goal,
+      latestAttempt: null
+    });
+    navigate('/speak/practice');
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-black text-gray-100">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(157,78,221,0.24),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(0,240,255,0.16),transparent_22%),radial-gradient(circle_at_50%_100%,rgba(255,45,149,0.11),transparent_24%),linear-gradient(145deg,#000000,#09090B_54%,#000000)]" />
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:36px_36px] opacity-25" />
-      <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px]" />
+    <main className="min-h-screen overflow-hidden bg-[#EEF2FF] text-slate-900">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(139,92,246,0.22),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(145deg,#F8FAFC,#EEF2FF_54%,#F7F5FF)]" />
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(99,102,241,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.025)_1px,transparent_1px)] bg-[size:40px_40px] opacity-45" />
+      <div className="fixed inset-0 bg-white/20 backdrop-blur-[2px]" />
 
       <section className="relative flex min-h-screen items-center justify-center px-4 py-8">
-        <PhoneFrame>
+        <PhoneFrame overlay={<GlobalLoadingOverlay label={globalLoadingLabel} show={showGlobalLoading} />}>
           <Header step={step} />
           <AnimatePresence mode="wait">
-            {step === 'home' && <HomeScreen key="home" onSubmit={startPrep} />}
+            {step === 'home' && (
+              <HomeScreen
+                key="home"
+                onContinueLearn={continueLearn}
+                onStartLearn={startLearn}
+                onStartSpeak={startSpeak}
+                learnSession={learnSession}
+                session={session}
+              />
+            )}
+            {step === 'settings' && (
+              <SettingsScreen key="settings" onSettingsChange={setSettings} settings={settings} />
+            )}
+            {step === 'learn' && (
+              <LearnScreen
+                busy={learnBusy}
+                errorKey={learnError}
+                key="learn"
+                learnSession={isNewLearnRoute ? DEFAULT_LEARN_SESSION : learnSession}
+                onBuildBridge={buildBridge}
+                onLearnPatch={(patch) => setLearnSession((current) => ({ ...current, ...patch }))}
+                onSendMessage={sendLearnThought}
+                onStart={startLearnFlow}
+                settings={settings}
+              />
+            )}
+            {step === 'bridge' && (
+              <BridgeScreen
+                bridgeData={bridgeData}
+                busy={speakBusy || bridgeBusy}
+                key="bridge"
+                onContinue={() => navigate(learnSession.learnSessionId ? `/learn/${learnSession.learnSessionId}` : '/learn')}
+                onPractice={practiceBridge}
+              />
+            )}
             {step === 'prep' && (
               <PrepRoom
                 key="prep"
-                input={hookInput}
-                cueCards={cueCards}
-                intent={intent}
-                onCardsChange={setCueCards}
-                onIntentChange={setIntent}
-                onReady={() => navigate('/stage')}
+                errorKey={speakError}
+                loading={speakBusy}
+                onApproachChange={updateSpeakApproach}
+                onPrepare={prepareDirectSpeak}
+                onPreviewPatch={updateSession}
+                onSessionPatch={updateSession}
+                onStart={goPractice}
+                session={session}
+                settings={settings}
               />
             )}
-            {step === 'stage' && (
+            {step === 'practice' && (
               <StageScreen
-                key={`stage-${attempt}`}
-                attempt={attempt}
-                cueCards={cueCards}
-                intent={intent}
-                onComplete={(spokenTranscript) => {
-                  setTranscript(spokenTranscript);
-                  navigate('/review');
+                key={`practice-${session.round}`}
+                onAttempt={(attempt) => {
+                  updateSession({ latestAttempt: attempt });
+                  navigate('/speak/review');
                 }}
+                onSessionPatch={updateSession}
+                session={session}
               />
             )}
             {step === 'review' && (
               <ReviewScreen
                 key="review"
-                cueCards={cueCards}
-                transcript={transcript}
-                intent={intent}
+                onReviewPatch={updateSession}
                 onTakeTwo={takeTwo}
+                session={session}
               />
             )}
           </AnimatePresence>
