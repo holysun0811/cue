@@ -5,6 +5,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { pageTransition } from '../lib/motion.js';
 import { uiTheme } from '../lib/uiTheme.js';
+import scienceLabImg from '../assets/ScienceLab.jpg';
+import historyWalkImg from '../assets/HistoryWalk.jpg';
+import techTalkImg from '../assets/TechTalk.jpg';
+import artGalleryImg from '../assets/ArtGallery.jpg';
+
+const TOPIC_IMAGES = {
+  'science-lab': scienceLabImg,
+  'history-walk': historyWalkImg,
+  'tech-talk': techTalkImg,
+  'art-gallery': artGalleryImg
+};
 
 const STEP_MARKS = [0.38, 0.72, 1];
 const MIN_VISIBLE_MS = 450;
@@ -129,24 +140,36 @@ export default function TopicLoadingScreen({ onPrepareTopic }) {
 
       <motion.div
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className={`relative flex h-[112px] w-[112px] items-center justify-center overflow-hidden rounded-[26px] bg-gradient-to-br ${topic.gradient} text-[48px] shadow-[0_24px_48px_rgba(15,23,42,0.22)] ring-1 ring-white/30`}
+        className={`relative flex h-[180px] w-[140px] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br ${topic.gradient} text-[48px] shadow-[0_24px_48px_rgba(15,23,42,0.22)] ring-1 ring-white/30`}
         initial={{ opacity: 0, y: 12, scale: 0.94 }}
         transition={{ type: 'spring', stiffness: 360, damping: 30 }}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.22]"
-          style={{
-            backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 12px)'
-          }}
-        />
-        <motion.span
-          animate={{ scale: [1, 1.08, 1] }}
-          className="relative"
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          {topic.emoji}
-        </motion.span>
+        {TOPIC_IMAGES[topic.id] ? (
+          <motion.img
+            alt=""
+            animate={{ scale: [1, 1.05, 1] }}
+            className="absolute inset-0 h-full w-full object-cover"
+            src={TOPIC_IMAGES[topic.id]}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ) : (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-[0.22]"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 12px)'
+              }}
+            />
+            <motion.span
+              animate={{ scale: [1, 1.08, 1] }}
+              className="relative"
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              {topic.emoji}
+            </motion.span>
+          </>
+        )}
       </motion.div>
 
       <motion.h2

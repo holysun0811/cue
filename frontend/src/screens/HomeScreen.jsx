@@ -10,12 +10,12 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
     accent === 'oral'
       ? {
           card: 'from-[#FF7C5A] via-[#F25A3A] to-[#E0432A]',
-          iconBg: 'bg-white/22',
+          iconBg: 'bg-white/30',
           glow: 'bg-white/28'
         }
       : {
           card: 'from-[#FFB366] via-[#FF8A3D] to-[#F46A1F]',
-          iconBg: 'bg-white/22',
+          iconBg: 'bg-white/30',
           glow: 'bg-white/28'
         };
 
@@ -38,8 +38,8 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
           backgroundSize: '14px 14px, 22px 22px, 18px 18px'
         }}
       />
-      <span className={`relative flex h-11 w-11 items-center justify-center rounded-[14px] ${styles.iconBg} text-white backdrop-blur-[2px]`}>
-        <Icon size={22} strokeWidth={2.4} />
+      <span className={`relative flex h-14 w-14 items-center justify-center rounded-[14px] ${styles.iconBg} text-white backdrop-blur-[2px]`}>
+        <Icon size={28} strokeWidth={2.4} />
       </span>
       <div className="relative">
         <h3 className="text-[1.3rem] font-black leading-tight tracking-tight">{title}</h3>
@@ -52,7 +52,7 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
 function RecentPracticeCard({ item, onClick }) {
   return (
     <motion.button
-      className="relative flex h-[122px] w-[162px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-[#F0E4D8]/80 bg-white/82 p-3 text-left shadow-[0_10px_22px_rgba(91,92,126,0.07)] backdrop-blur-xl transition hover:bg-white/94 active:translate-y-0.5"
+      className="relative flex h-[126px] w-[154px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-white/35 p-3 text-left text-white shadow-[0_6px_14px_rgba(91,92,126,0.1)] transition active:translate-y-0.5"
       onClick={onClick}
       type="button"
       whileTap={{ scale: 0.97 }}
@@ -84,7 +84,7 @@ function TopicCard({ onClick, topic }) {
   const { t } = useTranslation();
   return (
     <motion.button
-      className={`group relative flex aspect-[1.08] w-full flex-col justify-between overflow-hidden rounded-[24px] bg-gradient-to-br ${topic.gradient} p-3.5 text-left text-white shadow-[0_14px_28px_rgba(91,92,126,0.16)] ring-1 ring-white/20`}
+      className={`group relative flex aspect-[1.3] w-full flex-col justify-between overflow-hidden rounded-[24px] bg-gradient-to-br ${topic.gradient} p-3.5 text-left text-white shadow-[0_14px_28px_rgba(91,92,126,0.16)] ring-1 ring-white/20`}
       onClick={onClick}
       type="button"
       variants={springPop}
@@ -98,7 +98,7 @@ function TopicCard({ onClick, topic }) {
         }}
       />
       <div className="relative flex justify-end">
-        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-white/22 text-lg backdrop-blur-sm">
+        <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-white/22 text-2xl backdrop-blur-sm">
           {topic.emoji}
         </span>
       </div>
@@ -170,7 +170,7 @@ export default function HomeScreen({
         <div className="-mr-5 mt-3">
           {recentItems.length > 0 ? (
             <div className="relative">
-              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-0 pr-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-0 pr-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {recentItems.map((item) => (
                   <RecentPracticeCard item={item} key={item.id} onClick={() => onOpenRecent?.(item)} />
                 ))}
