@@ -26,7 +26,7 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'cue-backend' });
+  res.json({ ok: true, service: 'outspeak-backend' });
 });
 
 app.use('/api/ai', aiRoutes);

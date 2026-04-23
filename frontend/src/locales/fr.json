@@ -1,7 +1,7 @@
 {
   "brand": {
-    "kicker": "Cue",
-    "name": "Don't learn it. Cue it."
+    "kicker": "Outspeak",
+    "name": "From ideas to spoken answers"
   },
   "nav": {
     "home": "Accueil",
@@ -33,7 +33,7 @@
     "title": "Reglages",
     "subtitle": "Choisis la langue de l'app et la langue a pratiquer.",
     "uiLanguage": "Langue de l'app",
-    "uiLanguageHelper": "Controle les textes de l'interface Cue.",
+    "uiLanguageHelper": "Controle les textes de l'interface Outspeak.",
     "targetLanguageHelper": "Utilisee pour les plans oraux, la pratique et le retour.",
     "helper": "La langue de l'app controle les explications. La langue de pratique controle ce que tu repetes a l'oral."
   },
@@ -47,7 +47,7 @@
     "close": "Fermer",
     "eyebrow": "Examen blanc",
     "title": "Que veux-tu pratiquer ?",
-    "subtitle": "Ajoute un prompt, un sujet ou un document. Cue joue l'examinateur et lance un oral en plusieurs tours.",
+    "subtitle": "Ajoute un prompt, un sujet ou un document. Outspeak joue l'examinateur et lance un oral en plusieurs tours.",
     "inputTitle": "Commence par une idee",
     "inputHint": "Prompt, sujet, question ou description",
     "inputPlaceholder": "Dis quelque chose ou pose une question...",
@@ -74,7 +74,7 @@
     "releaseTopic": "Relache pour transcrire",
     "topicExample": "Par exemple : \"Je veux pratiquer une question sur Dolly the Sheep et son impact futur.\"",
     "topicTranscriptPlaceholder": "Ton sujet parle apparait ici. Tu peux le corriger avant de commencer.",
-    "materialHelper": "Cue generera des questions a partir du document.",
+    "materialHelper": "Outspeak generera des questions a partir du document.",
     "materialCamera": "Camera",
     "materialGallery": "Photo",
     "materialUpload": "Importer",
@@ -270,7 +270,7 @@
     "eyebrow": "Preparer",
     "title": "Un plan en 3 parties.",
     "directTitle": "Que veux-tu pratiquer ?",
-    "directSubtitle": "Ajoute un prompt, un sujet ou un document. Cue lance un examen oral blanc.",
+    "directSubtitle": "Ajoute un prompt, un sujet ou un document. Outspeak lance un examen oral blanc.",
     "directPlaceholder": "Colle ou tape un prompt oral.",
     "voice": "Voix",
     "listening": "Ecoute",

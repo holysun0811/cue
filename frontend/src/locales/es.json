@@ -1,7 +1,7 @@
 {
   "brand": {
-    "kicker": "Cue",
-    "name": "Don't learn it. Cue it."
+    "kicker": "Outspeak",
+    "name": "From ideas to spoken answers"
   },
   "nav": {
     "home": "Inicio",
@@ -33,7 +33,7 @@
     "title": "Ajustes",
     "subtitle": "Elige el idioma de la app y el idioma para practicar.",
     "uiLanguage": "Idioma de la app",
-    "uiLanguageHelper": "Controla los textos de la interfaz de Cue.",
+    "uiLanguageHelper": "Controla los textos de la interfaz de Outspeak.",
     "targetLanguageHelper": "Se usa en planes orales, practica y revision.",
     "helper": "El idioma de la app controla las explicaciones. El idioma de practica controla lo que ensayas en voz alta."
   },
@@ -47,7 +47,7 @@
     "close": "Cerrar",
     "eyebrow": "Examen simulado",
     "title": "Que quieres practicar?",
-    "subtitle": "Agrega un prompt, tema o material. Cue actuara como examinador e iniciara un examen oral de varios turnos.",
+    "subtitle": "Agrega un prompt, tema o material. Outspeak actuara como examinador e iniciara un examen oral de varios turnos.",
     "inputTitle": "Empieza con una idea",
     "inputHint": "Prompt, tema, pregunta o descripcion",
     "inputPlaceholder": "Di algo o haz una pregunta...",
@@ -74,7 +74,7 @@
     "releaseTopic": "Soltar para transcribir",
     "topicExample": "Por ejemplo: \"Quiero practicar una pregunta sobre Dolly the Sheep y su impacto futuro.\"",
     "topicTranscriptPlaceholder": "Tu tema hablado aparecera aqui. Puedes editarlo antes de empezar.",
-    "materialHelper": "Cue generara preguntas desde el material.",
+    "materialHelper": "Outspeak generara preguntas desde el material.",
     "materialCamera": "Camara",
     "materialGallery": "Foto",
     "materialUpload": "Subir",
@@ -270,7 +270,7 @@
     "eyebrow": "Preparar",
     "title": "Un plan en 3 partes.",
     "directTitle": "Que quieres practicar?",
-    "directSubtitle": "Agrega un prompt, tema o material. Cue iniciara un examen oral simulado.",
+    "directSubtitle": "Agrega un prompt, tema o material. Outspeak iniciara un examen oral simulado.",
     "directPlaceholder": "Pega o escribe un prompt oral.",
     "voice": "Voz",
     "listening": "Escuchando",

@@ -1,7 +1,7 @@
 {
   "brand": {
-    "kicker": "Cue",
-    "name": "Don't learn it. Cue it."
+    "kicker": "Outspeak",
+    "name": "From ideas to spoken answers"
   },
   "nav": {
     "home": "Start",
@@ -33,7 +33,7 @@
     "title": "Einstellungen",
     "subtitle": "Wahle die App-Sprache und die Sprache zum Uben.",
     "uiLanguage": "App-Sprache",
-    "uiLanguageHelper": "Steuert die Texte der Cue-Oberflache.",
+    "uiLanguageHelper": "Steuert die Texte der Outspeak-Oberflache.",
     "targetLanguageHelper": "Wird fur Sprechplane, Ubung und Review genutzt.",
     "helper": "Die App-Sprache steuert Erklarungen. Die Ubungssprache steuert, was du laut ubst."
   },
@@ -47,7 +47,7 @@
     "close": "Schliessen",
     "eyebrow": "Mock Exam",
     "title": "Was willst du uben?",
-    "subtitle": "Fuge Prompt, Thema oder Material hinzu. Cue spielt den Pruefer und startet eine muendliche Pruefung mit Nachfragen.",
+    "subtitle": "Fuge Prompt, Thema oder Material hinzu. Outspeak spielt den Pruefer und startet eine muendliche Pruefung mit Nachfragen.",
     "inputTitle": "Mit einer Idee starten",
     "inputHint": "Prompt, Thema, Frage oder Materialbeschreibung",
     "inputPlaceholder": "Sag etwas oder stelle eine Frage...",
@@ -74,7 +74,7 @@
     "releaseTopic": "Loslassen zum Transkribieren",
     "topicExample": "Zum Beispiel: \"Ich mochte eine Frage uber Dolly the Sheep und ihre Zukunftsfolgen uben.\"",
     "topicTranscriptPlaceholder": "Dein gesprochenes Thema erscheint hier. Du kannst es vor dem Start bearbeiten.",
-    "materialHelper": "Cue erzeugt Prueferfragen aus dem Material.",
+    "materialHelper": "Outspeak erzeugt Prueferfragen aus dem Material.",
     "materialCamera": "Kamera",
     "materialGallery": "Foto",
     "materialUpload": "Upload",
@@ -270,7 +270,7 @@
     "eyebrow": "Vorbereitung",
     "title": "Ein Plan in 3 Teilen.",
     "directTitle": "Was willst du uben?",
-    "directSubtitle": "Fuge einen Prompt, ein Thema oder Material hinzu. Cue startet eine mundliche Mock-Prufung.",
+    "directSubtitle": "Fuge einen Prompt, ein Thema oder Material hinzu. Outspeak startet eine mundliche Mock-Prufung.",
     "directPlaceholder": "Sprechprompt einfugen oder tippen.",
     "voice": "Stimme",
     "listening": "Hort zu",

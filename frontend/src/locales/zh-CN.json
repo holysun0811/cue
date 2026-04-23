@@ -1,7 +1,7 @@
 {
   "brand": {
-    "kicker": "Cue",
-    "name": "Don't learn it. Cue it."
+    "kicker": "Outspeak",
+    "name": "From ideas to spoken answers"
   },
   "nav": {
     "home": "回到首页",
@@ -33,7 +33,7 @@
     "title": "设置",
     "subtitle": "选择 App 界面语言和要练习的语言。",
     "uiLanguage": "应用语言",
-    "uiLanguageHelper": "控制 Cue 的界面文案。",
+    "uiLanguageHelper": "控制 Outspeak 的界面文案。",
     "targetLanguageHelper": "用于口语计划、练习和复盘。",
     "helper": "应用语言控制引导和解释，练习语言控制真正要开口练习的内容。"
   },
@@ -47,7 +47,7 @@
     "close": "关闭",
     "eyebrow": "模拟口试",
     "title": "你想考什么？",
-    "subtitle": "输入题目、主题或材料，Cue 会扮演考官，和你进行多轮口语问答。",
+    "subtitle": "输入题目、主题或材料，Outspeak 会扮演考官，和你进行多轮口语问答。",
     "inputTitle": "写想法",
     "inputHint": "题目、topic、问题或材料描述",
     "inputPlaceholder": "说点什么，或写一个问题...",
@@ -74,7 +74,7 @@
     "releaseTopic": "松开后转写",
     "topicExample": "比如“我想模拟一个关于 Dolly the Sheep 未来影响的口语题”。",
     "topicTranscriptPlaceholder": "语音识别结果会出现在这里，开始前可以修改。",
-    "materialHelper": "Cue 会基于材料生成考官提问。",
+    "materialHelper": "Outspeak 会基于材料生成考官提问。",
     "materialCamera": "拍照",
     "materialGallery": "选图",
     "materialUpload": "上传",
@@ -291,7 +291,7 @@
     "eyebrow": "口语准备",
     "title": "三步就能开口。",
     "directTitle": "你想考什么？",
-    "directSubtitle": "输入题目、主题或材料，Cue 会开始一场模拟口试。",
+    "directSubtitle": "输入题目、主题或材料，Outspeak 会开始一场模拟口试。",
     "directPlaceholder": "请输入一个口语题目。",
     "voice": "语音",
     "listening": "听取中",

@@ -24,7 +24,7 @@ async function generateJson(prompt) {
 
 function buildCuePrompt({ nativeThought, imageHint, locale }) {
   return `
-You are Cue, an AI-native English speaking prep coach for European high school students.
+You are Outspeak, an AI-native English speaking prep coach for European high school students.
 The student's native locale is ${locale || 'zh-CN'} and the target language is English.
 
 Input:
@@ -223,7 +223,7 @@ export async function analyzePromptInput(payload = {}) {
   }
 
   const prompt = `
-You are Cue, a school oral-task rehearsal coach.
+You are Outspeak, a school oral-task rehearsal coach.
 Normalize the user input into a concise task-ready prompt summary.
 
 Task type: ${taskType}
@@ -263,7 +263,7 @@ export async function buildSpeakingPlan(payload = {}) {
   }
 
   const prompt = `
-You are Cue, a mobile-first AI rehearsal coach for school oral tasks.
+You are Outspeak, a mobile-first AI rehearsal coach for school oral tasks.
 Build a concise 3-part speaking plan for EACH of the 3 recommended approaches. Optimize for speakability, not essay quality.
 
 Task type: ${taskType}
@@ -592,7 +592,7 @@ function buildPracticeHintPrompt({
     .join('\n');
 
   return `
-You are Cue's speaking hint generator for a mobile oral-practice chat.
+You are Outspeak's speaking hint generator for a mobile oral-practice chat.
 The learner has just received a new examiner follow-up question. Generate a tiny phrase hint for the learner's NEXT answer.
 
 Practice language:
@@ -661,7 +661,7 @@ export async function generateSampleAnswer(payload = {}) {
   }
 
   const prompt = `
-You are Cue. Generate a natural spoken sample answer for a student to imitate.
+You are Outspeak. Generate a natural spoken sample answer for a student to imitate.
 
 Target language: ${targetLanguage}
 Selected practice prompt:
@@ -705,7 +705,7 @@ export async function startLearnExploration(payload = {}) {
   }
 
   const prompt = `
-You are Cue in Learn mode. Help a student understand a topic before speaking.
+You are Outspeak in Learn mode. Help a student understand a topic before speaking.
 
 Topic or material:
 ${topicOrMaterial || '(none)'}
@@ -757,7 +757,7 @@ export async function continueLearnExploration(payload = {}) {
   }
 
   const prompt = `
-You are Cue in Learn mode. Continue a focused learning session.
+You are Outspeak in Learn mode. Continue a focused learning session.
 
 Current session:
 ${JSON.stringify(session)}
@@ -815,7 +815,7 @@ export async function generateBridgeRecap(payload = {}) {
   }
 
   const prompt = `
-You are Cue Bridge. Convert a Learn session into a concise speaking-ready recap.
+You are Outspeak Bridge. Convert a Learn session into a concise speaking-ready recap.
 
 Learn session:
 ${JSON.stringify(session)}
@@ -906,7 +906,7 @@ export async function generateActionableReview(payload = {}) {
   }
 
   const prompt = `
-You are Cue, a school oral-task review coach.
+You are Outspeak, a school oral-task review coach.
 Judge ONE practice attempt by a learner. Be concise, specific, actionable.
 You only have the transcript — you cannot hear real audio, so pronunciation can only be inferred indirectly (transcription gaps, mis-heard words, self-corrections, repeated restarts visible as fillers).
 

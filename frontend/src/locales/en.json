@@ -1,7 +1,7 @@
 {
   "brand": {
-    "kicker": "Cue",
-    "name": "Don't learn it. Cue it."
+    "kicker": "Outspeak",
+    "name": "From ideas to spoken answers"
   },
   "nav": {
     "home": "Back home",
@@ -33,7 +33,7 @@
     "title": "Settings",
     "subtitle": "Choose the app interface and the language you want to practice.",
     "uiLanguage": "App language",
-    "uiLanguageHelper": "Controls Cue's interface copy.",
+    "uiLanguageHelper": "Controls Outspeak's interface copy.",
     "targetLanguageHelper": "Use this for speaking plans, practice, and review.",
     "helper": "App language controls guidance and explanations. Practice language controls what you rehearse speaking."
   },
@@ -47,7 +47,7 @@
     "close": "Close",
     "eyebrow": "Mock exam",
     "title": "What do you want to practice?",
-    "subtitle": "Add a prompt, topic, or material. Cue will act as an examiner and start a multi-turn spoken exam.",
+    "subtitle": "Add a prompt, topic, or material. Outspeak will act as an examiner and start a multi-turn spoken exam.",
     "inputTitle": "Start with an idea",
     "inputHint": "Prompt, topic, question, or material description",
     "inputPlaceholder": "Say something or ask a question...",
@@ -74,7 +74,7 @@
     "releaseTopic": "Release to transcribe",
     "topicExample": "For example: \"I want to practice a question about Dolly the Sheep and its future impact.\"",
     "topicTranscriptPlaceholder": "Your spoken topic will appear here. You can edit it before starting.",
-    "materialHelper": "Cue will generate examiner questions from it.",
+    "materialHelper": "Outspeak will generate examiner questions from it.",
     "materialCamera": "Camera",
     "materialGallery": "Photo",
     "materialUpload": "Upload",
@@ -302,7 +302,7 @@
     "eyebrow": "Speak prep",
     "title": "A 3-part plan you can say.",
     "directTitle": "What do you want to practice?",
-    "directSubtitle": "Add a prompt, topic, or material. Cue will start a mock oral exam.",
+    "directSubtitle": "Add a prompt, topic, or material. Outspeak will start a mock oral exam.",
     "directPlaceholder": "Paste or type a speaking prompt.",
     "voice": "Voice",
     "listening": "Listening",
