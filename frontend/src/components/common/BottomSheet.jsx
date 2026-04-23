@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { uiTheme } from '../../lib/uiTheme.js';
 
 const SIZE_CLASS = {
   default: {
@@ -36,15 +37,15 @@ export default function BottomSheet({ children, footer, onClose, open, portal = 
           />
           <motion.div
             animate={{ y: 0 }}
-            className={`relative flex w-full flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-white bg-white shadow-[0_24px_70px_rgba(79,70,229,0.24)] ${sizeClass.sheet}`}
+            className={`relative flex w-full flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-white bg-white shadow-[0_24px_70px_rgba(91,92,126,0.18)] ${sizeClass.sheet}`}
             exit={{ y: 32 }}
             initial={{ y: 32 }}
             transition={{ type: 'spring', stiffness: 360, damping: 34 }}
           >
-            <div className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
+            <div className="z-10 flex shrink-0 items-center justify-between border-b border-[#F0E4D8]/80 bg-white px-4 py-3">
               <h3 className="text-sm font-black tracking-tight text-slate-950">{title}</h3>
               <button
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500"
+                className={`flex h-9 w-9 items-center justify-center rounded-full ${uiTheme.button.secondary}`}
                 onClick={onClose}
                 type="button"
               >
@@ -53,7 +54,7 @@ export default function BottomSheet({ children, footer, onClose, open, portal = 
             </div>
             <div className={`min-h-0 overflow-y-auto ${size === 'compact' ? 'shrink-0' : 'flex-1'} ${sizeClass.body}`}>{children}</div>
             {footer && (
-              <div className="z-20 shrink-0 border-t border-slate-100 bg-white px-4 pb-4 pt-2 shadow-[0_-12px_28px_rgba(255,255,255,0.98),0_-6px_18px_rgba(148,163,184,0.08)]">
+              <div className="z-20 shrink-0 border-t border-[#F0E4D8]/80 bg-white px-4 pb-4 pt-2 shadow-[0_-12px_28px_rgba(255,255,255,0.98),0_-6px_18px_rgba(128,99,70,0.08)]">
                 {footer}
               </div>
             )}

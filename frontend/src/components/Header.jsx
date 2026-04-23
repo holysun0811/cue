@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { uiTheme } from '../lib/uiTheme.js';
 
 function greetingKey() {
   const hour = new Date().getHours();
@@ -79,7 +80,7 @@ export default function Header({ onBack, rightSlot, step, titleOverride }) {
         <>
           <motion.button
             aria-label={t('nav.back')}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/80 bg-white/72 text-slate-700 shadow-[0_10px_24px_rgba(99,102,241,0.12)] backdrop-blur-md transition hover:border-violet-200 hover:text-violet-600"
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${uiTheme.iconButton.ghost}`}
             initial={{ opacity: 0, x: -10, filter: 'blur(6px)' }}
             animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             onClick={goBack}

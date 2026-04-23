@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
+import { uiTheme } from '../../lib/uiTheme.js';
 
 export default function AudioButton({ audioUrl, label }) {
   const play = () => {
@@ -9,7 +10,7 @@ export default function AudioButton({ audioUrl, label }) {
 
   return (
     <motion.button
-      className="flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-black text-sky-600 backdrop-blur-xl disabled:opacity-40"
+      className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-black backdrop-blur-xl ${uiTheme.chip.selected} ${uiTheme.button.secondaryDisabled}`}
       disabled={!audioUrl}
       onClick={play}
       type="button"

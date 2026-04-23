@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { pageTransition } from '../lib/motion.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 const STEP_MARKS = [0.38, 0.72, 1];
 const MIN_DURATION_MS = 1800;
@@ -75,8 +76,8 @@ export default function TopicLoadingScreen({ onPrepareTopic }) {
       className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pb-10 pt-4"
       {...pageTransition}
     >
-      <div className="pointer-events-none absolute -right-20 top-20 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -left-24 bottom-24 h-52 w-52 rounded-full bg-violet-200/40 blur-3xl" />
+      <div className={`pointer-events-none absolute -right-20 top-20 h-56 w-56 rounded-full blur-3xl ${uiTheme.background.warmGlow}`} />
+      <div className={`pointer-events-none absolute -left-24 bottom-24 h-52 w-52 rounded-full blur-3xl ${uiTheme.background.softGlow}`} />
 
       <motion.div
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -168,7 +169,7 @@ export default function TopicLoadingScreen({ onPrepareTopic }) {
         <div className="mt-6 flex flex-col items-center gap-3">
           <p className="text-center text-[13px] font-bold text-rose-500">{t(errorKey)}</p>
           <button
-            className="rounded-full bg-slate-900 px-4 py-2 text-[13px] font-black text-white shadow-[0_10px_20px_rgba(15,23,42,0.18)]"
+            className={`rounded-full px-4 py-2 text-[13px] font-black ${uiTheme.button.primary}`}
             onClick={() => navigate('/', { replace: true })}
             type="button"
           >

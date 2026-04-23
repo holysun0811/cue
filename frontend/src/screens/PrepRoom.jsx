@@ -7,6 +7,7 @@ import BottomSheet from '../components/common/BottomSheet.jsx';
 import StickyCTA from '../components/common/StickyCTA.jsx';
 import { createSpeechRecognition, fileToDataUrl } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -23,7 +24,7 @@ function highlightedPlanText(text = '', keyword = '') {
     const end = start + directMatch[0].length;
     return [
       text.slice(0, start),
-      <mark className="rounded-md bg-violet-100 px-1 font-black text-violet-700" key="keyword">
+      <mark className={`rounded-md px-1 font-black ${uiTheme.accent.mark}`} key="keyword">
         {text.slice(start, end)}
       </mark>,
       text.slice(end)
@@ -63,7 +64,7 @@ function highlightedPlanText(text = '', keyword = '') {
   matches.forEach((match, index) => {
     if (cursor < match.start) parts.push(text.slice(cursor, match.start));
     parts.push(
-      <mark className="rounded-md bg-violet-100 px-1 font-black text-violet-700" key={`${match.start}-${index}`}>
+      <mark className={`rounded-md px-1 font-black ${uiTheme.accent.mark}`} key={`${match.start}-${index}`}>
         {text.slice(match.start, match.end)}
       </mark>
     );
@@ -77,13 +78,13 @@ function highlightedPlanText(text = '', keyword = '') {
 function PlanSection({ item, index }) {
   return (
     <motion.div
-      className="rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_10px_22px_rgba(99,102,241,0.08)]"
+      className={`rounded-2xl p-3 ${uiTheme.selectable.base}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[10px] font-black text-indigo-600">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${uiTheme.accent.iconSoft}`}>
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
@@ -294,9 +295,9 @@ function AnswerApproachSelector({ loading, onChange, session }) {
   };
 
   return (
-    <section className="mt-4 rounded-[26px] border border-white bg-white/82 p-3 shadow-[0_14px_32px_rgba(99,102,241,0.1)] backdrop-blur-xl">
+    <section className={`mt-4 rounded-[26px] p-3 ${uiTheme.surface.elevated}`}>
       <div className="mb-3">
-        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-500">{t('prep.approachTitle')}</p>
+        <p className={`text-[11px] font-black uppercase tracking-[0.16em] ${uiTheme.accent.eyebrow}`}>{t('prep.approachTitle')}</p>
         <p className="mt-1 text-xs font-bold text-slate-400">{t('prep.approachHelper')}</p>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -304,11 +305,7 @@ function AnswerApproachSelector({ loading, onChange, session }) {
           const selected = selectedId === approach.id;
           return (
             <button
-              className={`w-[140px] shrink-0 overflow-hidden rounded-2xl border p-3 text-left transition disabled:opacity-55 ${
-                selected
-                  ? 'border-violet-300 bg-gradient-to-br from-violet-50 to-sky-50 shadow-[0_10px_22px_rgba(99,102,241,0.12)]'
-                  : 'border-slate-100 bg-white'
-              }`}
+              className={`w-[140px] shrink-0 overflow-hidden rounded-2xl p-3 text-left transition ${selected ? uiTheme.selectable.selected : uiTheme.selectable.base} ${uiTheme.selectable.disabled}`}
               disabled={loading}
               key={approach.id}
               onClick={() => chooseApproach(approach)}
@@ -318,7 +315,7 @@ function AnswerApproachSelector({ loading, onChange, session }) {
                 <span className="min-w-0 break-words text-sm font-black leading-snug text-slate-900">{approach.label}</span>
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                    selected ? 'border-violet-500 bg-violet-500 text-white' : 'border-slate-200 bg-slate-50 text-transparent'
+                    selected ? uiTheme.selectionMark.selected : uiTheme.selectionMark.idle
                   }`}
                 >
                   <Check size={13} />
@@ -330,8 +327,8 @@ function AnswerApproachSelector({ loading, onChange, session }) {
         <button
           className={`min-h-[86px] w-[132px] shrink-0 overflow-hidden rounded-2xl border border-dashed p-3 text-left transition ${
             selectedId === 'custom'
-              ? 'border-violet-300 bg-violet-50 text-violet-600'
-              : 'border-slate-200 bg-slate-50 text-slate-500'
+              ? `border-[#F6A55E]/70 bg-[#FFF1E3] ${uiTheme.accent.text}`
+              : 'border-[#E8DCCB] bg-[#FFF9F2]/76 text-slate-500'
           }`}
           disabled={loading}
           onClick={() => setCustomOpen(true)}
@@ -342,7 +339,7 @@ function AnswerApproachSelector({ loading, onChange, session }) {
         </button>
       </div>
       {selectedApproach?.summary && (
-        <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/82 px-3 py-2.5">
+        <div className={`mt-3 rounded-2xl px-3 py-2.5 ${uiTheme.surface.muted}`}>
           <p className="whitespace-pre-line break-words text-xs font-bold leading-relaxed text-slate-600">{selectedApproach.summary}</p>
         </div>
       )}
@@ -350,13 +347,13 @@ function AnswerApproachSelector({ loading, onChange, session }) {
       <BottomSheet onClose={() => setCustomOpen(false)} open={customOpen} portal size="compact" title={t('prep.customApproach')}>
         <div className="space-y-3">
           <textarea
-            className="h-28 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
+            className={`h-28 w-full resize-none rounded-2xl px-3 py-3 text-sm leading-relaxed text-slate-800 outline-none ${uiTheme.input.container} ${uiTheme.input.placeholder}`}
             onChange={(event) => setCustomText(event.target.value)}
             placeholder={t('prep.customApproachPlaceholder')}
             value={customText}
           />
           <button
-            className="flex min-h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-violet-500 to-sky-400 text-sm font-black text-white disabled:opacity-40"
+            className={`flex min-h-11 w-full items-center justify-center rounded-2xl text-sm font-black transition ${uiTheme.button.primary} ${uiTheme.button.primaryDisabled}`}
             disabled={!customText.trim() || loading}
             onClick={submitCustom}
             type="button"
@@ -374,15 +371,15 @@ function SourceOptionCard({ description, icon: Icon, onClick, selected, title })
     <button
       className={`grid min-h-[62px] grid-cols-[34px_1fr_22px] items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition active:scale-[0.99] ${
         selected
-          ? 'border-violet-200 bg-white/88 shadow-[0_8px_18px_rgba(99,102,241,0.1)]'
-          : 'border-white/80 bg-white/58 shadow-[0_6px_14px_rgba(91,92,126,0.05)]'
+          ? uiTheme.selectable.selected
+          : uiTheme.selectable.base
       }`}
       onClick={onClick}
       type="button"
     >
       <span
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[14px] ${
-          selected ? 'bg-violet-500 text-white' : 'bg-slate-50 text-slate-500'
+          selected ? uiTheme.accent.iconSoft : 'bg-[#FFF9F2] text-slate-500'
         }`}
       >
         <Icon size={16} />
@@ -393,7 +390,7 @@ function SourceOptionCard({ description, icon: Icon, onClick, selected, title })
       </span>
       <span
         className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border ${
-          selected ? 'border-violet-500 bg-violet-500 text-white' : 'border-slate-200 bg-white text-transparent'
+          selected ? uiTheme.selectionMark.selected : uiTheme.selectionMark.idle
         }`}
       >
         <Check size={12} strokeWidth={3} />
@@ -512,14 +509,14 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
       return (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 border-l-2 border-violet-100 pl-3"
+          className="mt-3 border-l-2 border-[#F6A55E]/45 pl-3"
           exit={{ opacity: 0, y: -4 }}
           initial={{ opacity: 0, y: 6 }}
           key="prompt"
           transition={{ duration: 0.16, ease: 'easeOut' }}
         >
           <textarea
-            className="h-[78px] w-full resize-none rounded-[18px] border border-white/80 bg-white/76 px-3 py-2.5 text-sm leading-relaxed text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.06)] outline-none placeholder:text-slate-400"
+            className={`h-[78px] w-full resize-none rounded-[18px] px-3 py-2.5 text-sm leading-relaxed text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.06)] outline-none ${uiTheme.input.container} ${uiTheme.input.placeholder}`}
             onChange={(event) => setPromptText(event.target.value)}
             placeholder={t('examSetup.promptPlaceholder')}
             value={promptText}
@@ -532,7 +529,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
       return (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 space-y-2 border-l-2 border-violet-100 pl-3"
+          className="mt-3 space-y-2 border-l-2 border-[#F6A55E]/45 pl-3"
           exit={{ opacity: 0, y: -4 }}
           initial={{ opacity: 0, y: 6 }}
           key="topic"
@@ -541,8 +538,8 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
           <button
             className={`flex min-h-11 w-full select-none items-center justify-center gap-2 rounded-full border px-4 text-[13px] font-black shadow-[0_8px_18px_rgba(91,92,126,0.06)] transition active:scale-[0.99] ${
               voiceActive
-                ? 'border-slate-900 bg-slate-950 text-white'
-                : 'border-violet-100 bg-white/80 text-violet-600'
+                ? uiTheme.chip.selected
+                : `${uiTheme.chip.base} ${uiTheme.accent.text}`
             }`}
             onContextMenu={(event) => event.preventDefault()}
             onPointerCancel={stopTopicSpeech}
@@ -562,7 +559,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
           </button>
           <p className="px-1 text-[11px] font-semibold leading-snug text-slate-400">{t('examSetup.topicExample')}</p>
           <textarea
-            className="h-[62px] w-full resize-none rounded-[16px] border border-white/80 bg-white/70 px-3 py-2 text-sm leading-snug text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.05)] outline-none placeholder:text-slate-400"
+            className={`h-[62px] w-full resize-none rounded-[16px] px-3 py-2 text-sm leading-snug text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.05)] outline-none ${uiTheme.input.container} ${uiTheme.input.placeholder}`}
             onChange={(event) => setTopicText(event.target.value)}
             placeholder={t('examSetup.topicTranscriptPlaceholder')}
             value={topicText}
@@ -575,7 +572,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
       return (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 space-y-2 border-l-2 border-violet-100 pl-3"
+          className="mt-3 space-y-2 border-l-2 border-[#F6A55E]/45 pl-3"
           exit={{ opacity: 0, y: -4 }}
           initial={{ opacity: 0, y: 6 }}
           key="material"
@@ -583,7 +580,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
         >
           <div className="grid grid-cols-3 gap-2">
             <button
-              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] px-2 text-[11px] font-black ${uiTheme.button.secondary}`}
               onClick={() => cameraRef.current?.click()}
               type="button"
             >
@@ -591,7 +588,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
               {t('examSetup.materialCamera')}
             </button>
             <button
-              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] px-2 text-[11px] font-black ${uiTheme.button.secondary}`}
               onClick={() => galleryRef.current?.click()}
               type="button"
             >
@@ -599,7 +596,7 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
               {t('examSetup.materialGallery')}
             </button>
             <button
-              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] px-2 text-[11px] font-black ${uiTheme.button.secondary}`}
               onClick={() => materialRef.current?.click()}
               type="button"
             >
@@ -609,10 +606,10 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
           </div>
           <p className="px-1 text-[11px] font-semibold leading-snug text-slate-400">{t('examSetup.materialHelper')}</p>
           {imageBase64 && (
-            <div className="flex items-center gap-2 rounded-[16px] border border-sky-100 bg-sky-50/78 p-2">
+            <div className={`flex items-center gap-2 rounded-[16px] p-2 ${uiTheme.selectable.selected}`}>
               <img alt={t('examSetup.materialAlt')} className="h-10 w-10 rounded-xl object-cover" src={imageBase64} />
-              <p className="min-w-0 flex-1 truncate text-[11px] font-black text-sky-600">{t('examSetup.materialReady')}</p>
-              <button className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-400" onClick={() => setImageBase64('')} type="button">
+              <p className={`min-w-0 flex-1 truncate text-[11px] font-black ${uiTheme.accent.text}`}>{t('examSetup.materialReady')}</p>
+              <button className={`flex h-7 w-7 items-center justify-center rounded-full ${uiTheme.button.secondary}`} onClick={() => setImageBase64('')} type="button">
                 <X size={14} />
               </button>
             </div>
@@ -629,11 +626,11 @@ function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
 
   return (
     <motion.section className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-28 pt-4" {...pageTransition}>
-      <div className="pointer-events-none absolute -right-24 top-4 h-56 w-56 rounded-full bg-sky-200/36 blur-3xl" />
-      <div className="pointer-events-none absolute -left-24 bottom-20 h-52 w-52 rounded-full bg-rose-100/70 blur-3xl" />
+      <div className={`pointer-events-none absolute -right-24 top-4 h-56 w-56 rounded-full blur-3xl ${uiTheme.background.warmGlow}`} />
+      <div className={`pointer-events-none absolute -left-24 bottom-20 h-52 w-52 rounded-full blur-3xl ${uiTheme.background.softGlow}`} />
 
       <div className="relative">
-        <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-violet-500">
+        <p className={`flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] ${uiTheme.accent.eyebrow}`}>
           <Sparkles size={13} />
           {t('examSetup.eyebrow')}
         </p>
@@ -787,7 +784,7 @@ export default function PrepRoom({ errorKey, loading, onApproachChange, onPrevie
               {session.promptSource === 'bridge' ? t('prep.selectedPrompt') : t('prep.promptSummary')}
             </p>
             {session.promptSource === 'bridge' && (
-              <span className="shrink-0 rounded-full bg-violet-50/80 px-2 py-0.5 text-[10px] font-black text-violet-500">
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black ${uiTheme.chip.selected}`}>
                 {t('prep.fromRecap')}
               </span>
             )}
@@ -797,15 +794,15 @@ export default function PrepRoom({ errorKey, loading, onApproachChange, onPrevie
 
         <AnswerApproachSelector loading={approachLoading || loading} onChange={changeApproach} session={session} />
 
-        <div className="mt-4 rounded-[26px] border border-white bg-white/82 p-3 shadow-[0_14px_32px_rgba(99,102,241,0.1)] backdrop-blur-xl">
+        <div className={`mt-4 rounded-[26px] p-3 ${uiTheme.surface.elevated}`}>
           <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-500">{t('prep.planTitle')}</p>
+            <p className={`text-[11px] font-black uppercase tracking-[0.16em] ${uiTheme.accent.eyebrow}`}>{t('prep.planTitle')}</p>
             {approachLoading && <span className="text-[10px] font-black text-slate-400">{t('prep.updatingPlan')}</span>}
           </div>
           {approachLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((item) => (
-                <div className="h-[86px] animate-pulse rounded-2xl bg-slate-100" key={item} />
+                <div className={`h-[86px] animate-pulse rounded-2xl ${uiTheme.loading.skeleton}`} key={item} />
               ))}
             </div>
           ) : (
@@ -816,7 +813,7 @@ export default function PrepRoom({ errorKey, loading, onApproachChange, onPrevie
             </div>
           )}
           <button
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-sky-100 bg-sky-50/70 py-2.5 text-xs font-black text-sky-600 disabled:opacity-45"
+            className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-xs font-black ${uiTheme.chip.selected} ${uiTheme.button.secondaryDisabled}`}
             disabled={previewState === 'loading' || approachLoading || !session.speakingPlan.length}
             onClick={playPreview}
             type="button"

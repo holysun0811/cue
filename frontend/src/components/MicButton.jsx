@@ -11,15 +11,19 @@ export default function MicButton({ active, activeText, idleText, label, onClick
       whileTap={{ scale: 0.95 }}
     >
       <motion.span
-        className="absolute inset-0 rounded-full border border-cue-purple/35 bg-cue-purple/10"
+        className="absolute inset-0 rounded-full border border-[#EF7B37]/35 bg-[#FFE2CD]/55"
         animate={{ scale: active ? [1, 1.18, 1] : [1, 1.12, 1], opacity: active ? [0.7, 0.18, 0.7] : [0.48, 0.12, 0.48] }}
         transition={{ duration: active ? 1.05 : 2.25, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.span
-        className="absolute h-32 w-32 rounded-full border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(135deg,rgba(157,78,221,0.34),rgba(0,240,255,0.18)_48%,rgba(24,24,27,0.96))] shadow-neon backdrop-blur-xl"
-        animate={{ boxShadow: active ? '0 0 36px rgba(0,240,255,0.55), 0 0 86px rgba(157,78,221,0.34)' : '0 0 24px rgba(0,240,255,0.34), 0 0 58px rgba(157,78,221,0.18)' }}
+        className="absolute h-32 w-32 rounded-full border border-white/60 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.5),transparent_32%),linear-gradient(135deg,#FF8A5B,#EF4C2F_58%,#C6531A)] shadow-[0_0_28px_rgba(239,76,47,0.32),0_0_72px_rgba(239,106,31,0.22)]"
+        animate={{
+          boxShadow: active
+            ? '0 0 36px rgba(239,76,47,0.55), 0 0 86px rgba(239,106,31,0.34)'
+            : '0 0 24px rgba(239,76,47,0.34), 0 0 58px rgba(239,106,31,0.18)'
+        }}
       />
-      <span className="relative flex h-[86px] w-[86px] flex-col items-center justify-center rounded-full border border-white/20 bg-black text-gray-100 transition group-hover:text-cue-cyan">
+      <span className="relative flex h-[86px] w-[86px] flex-col items-center justify-center rounded-full border border-white/60 bg-white text-[#C6531A] transition group-hover:text-[#EF4C2F]">
         {active ? <Pause size={28} fill="currentColor" /> : <Mic size={30} />}
         <span className="mt-1 text-[10px] font-black uppercase tracking-[0.18em]">{active ? activeText : idleText}</span>
       </span>

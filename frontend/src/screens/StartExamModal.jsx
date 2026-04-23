@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Camera, ChevronRight, Mic, Sparkles, X } from 'lucide-react';
 import { createSpeechRecognition, fileToDataUrl } from '../lib/media.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 export default function StartExamModal({ errorKey, loading, onClose, onStartExam, settings }) {
   const { t } = useTranslation();
@@ -71,18 +72,18 @@ export default function StartExamModal({ errorKey, loading, onClose, onStartExam
   return (
     <motion.div
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="absolute inset-0 z-[160] flex flex-col overflow-hidden rounded-[38px] bg-[#F7F5FF]"
+      className={`absolute inset-0 z-[160] flex flex-col overflow-hidden rounded-[38px] ${uiTheme.background.frame}`}
       exit={{ opacity: 0, y: 32, scale: 0.985 }}
       initial={{ opacity: 0, y: 42, scale: 0.985 }}
       transition={{ type: 'spring', stiffness: 380, damping: 34 }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_7%,rgba(139,92,246,0.18),transparent_30%),radial-gradient(circle_at_88%_16%,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,245,255,0.86)_50%,rgba(239,246,255,0.78))]" />
+      <div className={`pointer-events-none absolute inset-0 ${uiTheme.background.frameWash}`} />
       <div className="pointer-events-none absolute left-1/2 top-[14px] z-10 h-[34px] w-[124px] -translate-x-1/2 rounded-full bg-black shadow-[0_10px_22px_rgba(15,23,42,0.28)]" />
 
       <header className="relative z-20 grid h-[104px] shrink-0 grid-cols-[56px_1fr_auto] items-center gap-2 px-5 pb-0 pt-[48px]">
         <button
           aria-label={t('examSetup.close')}
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/80 bg-white/72 text-slate-700 shadow-[0_10px_24px_rgba(99,102,241,0.12)] backdrop-blur-md transition active:scale-95"
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${uiTheme.iconButton.ghost} active:scale-95`}
           onClick={onClose}
           type="button"
         >
@@ -90,7 +91,7 @@ export default function StartExamModal({ errorKey, loading, onClose, onStartExam
         </button>
         <h1 className="truncate text-center text-base font-black tracking-tight text-slate-950">{t('examSetup.stepTitle')}</h1>
         <button
-          className="min-w-[72px] justify-self-end whitespace-nowrap rounded-full bg-slate-950 px-4 py-2.5 text-[13px] font-black leading-none text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)] transition disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none active:scale-95"
+          className={`min-w-[72px] justify-self-end whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-black leading-none transition active:scale-95 ${uiTheme.button.primary} ${uiTheme.button.primaryDisabled}`}
           disabled={!canStartExam || loading}
           onClick={startExam}
           type="button"
@@ -101,7 +102,7 @@ export default function StartExamModal({ errorKey, loading, onClose, onStartExam
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-7 pt-12">
         <section className="relative flex min-h-[430px] flex-col rounded-[32px] border border-white/90 bg-white/94 px-7 pb-20 pt-9 shadow-[0_24px_54px_rgba(91,92,126,0.12)] backdrop-blur-xl">
-          <Sparkles className="mb-10 text-violet-100" size={38} strokeWidth={2.6} />
+          <Sparkles className="mb-10 text-[#F6C59A]" size={38} strokeWidth={2.6} />
           <div>
             <p className="text-[1.65rem] font-black leading-tight tracking-tight text-slate-950">{t('examSetup.inputTitle')}</p>
             <p className="mt-1 text-[13px] font-bold leading-snug text-slate-400">{t('examSetup.inputHint')}</p>
@@ -118,10 +119,10 @@ export default function StartExamModal({ errorKey, loading, onClose, onStartExam
           />
           <button
             aria-label={voiceActive ? t('examSetup.voiceListening') : t('examSetup.voiceLabel')}
-            className={`absolute bottom-7 right-7 flex h-14 w-14 items-center justify-center rounded-full shadow-[0_14px_30px_rgba(99,102,241,0.18)] transition active:scale-95 ${
+            className={`absolute bottom-7 right-7 flex h-14 w-14 items-center justify-center rounded-full shadow-[0_14px_30px_rgba(239,76,47,0.2)] transition active:scale-95 ${
               voiceActive
-                ? 'bg-slate-950 text-white'
-                : 'bg-gradient-to-br from-violet-500 to-sky-400 text-white'
+                ? 'bg-[#C6531A] text-white'
+                : uiTheme.button.primary
             }`}
             onClick={() => (voiceActive ? stopVoiceInput() : startVoiceInput())}
             type="button"
@@ -135,7 +136,7 @@ export default function StartExamModal({ errorKey, loading, onClose, onStartExam
           onClick={() => photoRef.current?.click()}
           type="button"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-[22px] bg-sky-50 text-sky-600">
+          <span className={`flex h-14 w-14 items-center justify-center rounded-[22px] ${uiTheme.accent.iconSoft}`}>
             <Camera size={22} />
           </span>
           <span className="min-w-0">

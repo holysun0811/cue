@@ -6,25 +6,26 @@ import { generateReview } from '../api/client.js';
 import AudioButton from '../components/common/AudioButton.jsx';
 import StickyCTA from '../components/common/StickyCTA.jsx';
 import { pageTransition } from '../lib/motion.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 function Skeleton({ className }) {
-  return <div className={`animate-pulse rounded-2xl bg-slate-100 ${className}`} />;
+  return <div className={`animate-pulse rounded-2xl ${uiTheme.loading.skeleton} ${className}`} />;
 }
 
 function LoadingView({ promptSummary, t }) {
   return (
     <div className="space-y-3">
       {promptSummary && (
-        <div className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-2.5">
+        <div className={`rounded-2xl px-3 py-2.5 ${uiTheme.surface.muted}`}>
           <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-500">{promptSummary}</p>
         </div>
       )}
-      <div className="rounded-[22px] border border-sky-100 bg-sky-50/80 p-4">
+      <div className={`rounded-[22px] p-4 ${uiTheme.selectable.selected}`}>
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-300 border-t-sky-600" />
+          <div className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#F0E4D8] border-t-[#EF4C2F]" />
           <div>
-            <p className="text-sm font-black text-sky-700">{t('review.loadingTitle')}</p>
-            <p className="mt-0.5 text-xs font-bold text-sky-500">{t('review.loadingHint')}</p>
+            <p className={`text-sm font-black ${uiTheme.accent.text}`}>{t('review.loadingTitle')}</p>
+            <p className={`mt-0.5 text-xs font-bold ${uiTheme.accent.mutedText}`}>{t('review.loadingHint')}</p>
           </div>
         </div>
       </div>
@@ -39,13 +40,13 @@ function ScoreRow({ label, value }) {
   return (
     <div className="grid grid-cols-[88px_1fr_28px] items-center gap-2">
       <span className="text-xs font-bold text-slate-500">{label}</span>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 overflow-hidden rounded-full bg-[#F0E8DF]">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400"
+          className="h-full rounded-full bg-gradient-to-r from-[#FF8A5B] to-[#EF4C2F]"
           style={{ width: `${value || 0}%` }}
         />
       </div>
-      <span className="text-right text-xs font-black text-sky-600">{value || 0}</span>
+      <span className={`text-right text-xs font-black ${uiTheme.accent.text}`}>{value || 0}</span>
     </div>
   );
 }
@@ -104,7 +105,7 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-28 pt-5">
         {/* Title — icon + main title only, no separate eyebrow row */}
         <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="shrink-0 text-violet-500" size={15} />
+          <Sparkles className={`shrink-0 ${uiTheme.accent.icon}`} size={15} />
           <h2 className="text-xl font-black tracking-tight text-slate-950">{t('review.title')}</h2>
         </div>
 
@@ -123,7 +124,7 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
           <div className="space-y-3">
             {/* Prompt context */}
             {session.promptSummary && (
-              <div className="rounded-2xl border border-slate-100 bg-white/70 px-3 py-2.5">
+              <div className={`rounded-2xl px-3 py-2.5 ${uiTheme.surface.muted}`}>
                 <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-500">
                   {session.promptSummary}
                 </p>
@@ -132,8 +133,8 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
 
             {/* Primary fix */}
             {primaryFix && (
-              <div className="rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 to-sky-50 p-4 shadow-[0_10px_22px_rgba(99,102,241,0.1)]">
-                <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-violet-500">
+              <div className={`rounded-[22px] p-4 ${uiTheme.selectable.selected}`}>
+                <p className={`mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] ${uiTheme.accent.text}`}>
                   <Target size={12} />
                   {t('review.topFixLabel')}
                 </p>
@@ -145,7 +146,7 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
             )}
 
             {/* Better Version */}
-            <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.09)] backdrop-blur-xl">
+            <div className={`rounded-[22px] p-4 ${uiTheme.surface.elevated}`}>
               <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.betterVersion')}</p>
               <p className="text-sm leading-relaxed text-slate-700">{review.betterVersion?.text}</p>
               {review.betterVersion?.audioUrl && (
@@ -157,12 +158,12 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
 
             {/* Other fixes — always expanded */}
             {otherFixes.length > 0 && (
-              <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.08)] backdrop-blur-xl">
+              <div className={`rounded-[22px] p-4 ${uiTheme.surface.elevated}`}>
                 <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.otherNotes')}</p>
                 <div className="space-y-2">
                   {otherFixes.map((fix, i) => (
                     <p
-                      className="rounded-2xl bg-slate-50 px-3 py-2.5 text-sm font-bold leading-snug text-slate-700"
+                      className={`rounded-2xl px-3 py-2.5 text-sm font-bold leading-snug text-slate-700 ${uiTheme.surface.subtle}`}
                       key={i}
                     >
                       {i + 2}. {fix}
@@ -173,7 +174,7 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
             )}
 
             {/* Top Version + scores — always expanded */}
-            <div className="rounded-[22px] border border-white bg-white/82 p-4 shadow-[0_10px_24px_rgba(99,102,241,0.08)] backdrop-blur-xl">
+            <div className={`rounded-[22px] p-4 ${uiTheme.surface.elevated}`}>
               <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.topVersion')}</p>
               <p className="text-sm leading-relaxed text-slate-700">{review.topVersion?.text}</p>
               {review.topVersion?.audioUrl && (

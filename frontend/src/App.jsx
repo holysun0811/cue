@@ -18,6 +18,7 @@ import StartExamModal from './screens/StartExamModal.jsx';
 import FakeCameraScreen from './screens/FakeCameraScreen.jsx';
 import TopicLoadingScreen from './screens/TopicLoadingScreen.jsx';
 import GlobalLoadingOverlay from './components/common/GlobalLoadingOverlay.jsx';
+import { uiTheme } from './lib/uiTheme.js';
 
 function stepFromPath(pathname) {
   if (pathname === '/') return 'home';
@@ -564,10 +565,10 @@ export default function App() {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#EEF2FF] text-slate-900">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(139,92,246,0.22),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(145deg,#F8FAFC,#EEF2FF_54%,#F7F5FF)]" />
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(99,102,241,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.025)_1px,transparent_1px)] bg-[size:40px_40px] opacity-45" />
-      <div className="fixed inset-0 bg-white/20 backdrop-blur-[2px]" />
+    <main className={`min-h-screen overflow-hidden text-slate-900 ${uiTheme.background.app}`}>
+      <div className={`fixed inset-0 ${uiTheme.background.appWash}`} />
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(239,106,31,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(168,127,89,0.026)_1px,transparent_1px)] bg-[size:40px_40px] opacity-35" />
+      <div className="fixed inset-0 bg-white/18 backdrop-blur-[1px]" />
 
       <section className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <PhoneFrame overlay={<GlobalLoadingOverlay label={globalLoadingLabel} show={showGlobalLoading} />}>
@@ -576,7 +577,7 @@ export default function App() {
             rightSlot={
               step === 'practice' && practiceUserMessageCount > 0 ? (
                 <motion.button
-                  className="flex h-10 items-center px-1 text-[15px] font-semibold text-violet-600 transition hover:text-violet-700"
+                  className={`flex h-10 items-center px-1 text-[15px] font-semibold transition ${uiTheme.accent.text}`}
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   onClick={() => setFinishConfirmOpen(true)}
@@ -706,17 +707,17 @@ export default function App() {
                       {t('practice.finishConfirmBody')}
                     </p>
                   </div>
-                  <div className="flex border-t border-slate-200 text-[15px]">
+                  <div className="flex border-t border-[#F0E4D8]/80 text-[15px]">
                     <button
-                      className="flex-1 py-[11px] font-normal text-slate-600 transition active:bg-slate-100"
+                      className="flex-1 py-[11px] font-normal text-slate-600 transition active:bg-[#FFF9F2]"
                       onClick={() => setFinishConfirmOpen(false)}
                       type="button"
                     >
                       {t('practice.finishConfirmCancel')}
                     </button>
-                    <div aria-hidden="true" className="w-px bg-slate-200" />
+                    <div aria-hidden="true" className="w-px bg-[#F0E4D8]" />
                     <button
-                      className="flex-1 py-[11px] font-semibold text-violet-600 transition active:bg-violet-50"
+                      className={`flex-1 py-[11px] font-semibold transition active:bg-[#FFF1E3] ${uiTheme.accent.text}`}
                       onClick={confirmFinishPractice}
                       type="button"
                     >

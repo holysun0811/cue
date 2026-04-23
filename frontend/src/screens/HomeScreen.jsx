@@ -157,7 +157,7 @@ export default function HomeScreen({
     >
       <div className="pointer-events-none absolute -right-24 top-6 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-24 top-48 h-52 w-52 rounded-full bg-rose-100/60 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 top-[480px] h-56 w-56 rounded-full bg-violet-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 top-[480px] h-56 w-56 rounded-full bg-amber-100/50 blur-3xl" />
 
       <motion.div
         animate="show"

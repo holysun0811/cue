@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, ChevronRight, Languages, Mic2, Sparkles } from 'lucide-react';
 import BottomSheet from '../components/common/BottomSheet.jsx';
 import { pageTransition, springPop } from '../lib/motion.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 const LANGUAGE_OPTIONS = ['en', 'zh-CN', 'fr', 'de', 'es'];
 
@@ -12,20 +13,20 @@ function LanguageRow({ helper, icon: Icon, label, onOpen, value }) {
 
   return (
     <motion.button
-      className="flex w-full items-center gap-3 rounded-[24px] border border-white/80 bg-white/66 p-3 text-left shadow-[0_12px_28px_rgba(91,92,126,0.08)] backdrop-blur-xl transition hover:bg-white/78"
+      className={`flex w-full items-center gap-3 rounded-[24px] p-3 text-left transition hover:bg-white/90 ${uiTheme.surface.elevated}`}
       onClick={onOpen}
       type="button"
       variants={springPop}
       whileTap={{ scale: 0.985 }}
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-violet-100 to-sky-100 text-violet-600">
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] ${uiTheme.accent.iconSoft}`}>
         <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-black tracking-tight text-slate-900">{label}</span>
         <span className="mt-0.5 block text-xs leading-snug text-slate-500">{helper}</span>
       </span>
-      <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-xs font-black text-slate-700">
+      <span className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-black ${uiTheme.chip.base}`}>
         {t(`languages.${value}`)}
         <ChevronRight size={14} />
       </span>
@@ -45,8 +46,8 @@ function LanguagePickerSheet({ onClose, onSelect, open, title, value }) {
             <button
               className={`flex min-h-[56px] w-full items-center justify-between rounded-[20px] border px-4 py-3 text-left transition ${
                 selected
-                  ? 'border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 text-slate-950 shadow-[0_10px_24px_rgba(99,102,241,0.1)]'
-                  : 'border-slate-100 bg-slate-50/80 text-slate-600'
+                  ? `${uiTheme.selectable.selected} text-slate-950`
+                  : `${uiTheme.selectable.muted} text-slate-600`
               }`}
               key={language}
               onClick={() => onSelect(language)}
@@ -58,7 +59,7 @@ function LanguagePickerSheet({ onClose, onSelect, open, title, value }) {
               </span>
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                  selected ? 'bg-gradient-to-br from-violet-500 to-sky-400 text-white' : 'bg-white text-transparent'
+                  selected ? uiTheme.selectionMark.selected : uiTheme.selectionMark.idle
                 }`}
               >
                 <Check size={16} strokeWidth={3} />
@@ -100,11 +101,11 @@ export default function SettingsScreen({ onSettingsChange, settings }) {
 
   return (
     <motion.section className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5 pt-4" {...pageTransition}>
-      <div className="pointer-events-none absolute -right-24 top-0 h-60 w-60 rounded-full bg-sky-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -left-20 bottom-20 h-52 w-52 rounded-full bg-rose-100/80 blur-3xl" />
+      <div className={`pointer-events-none absolute -right-24 top-0 h-60 w-60 rounded-full blur-3xl ${uiTheme.background.warmGlow}`} />
+      <div className={`pointer-events-none absolute -left-20 bottom-20 h-52 w-52 rounded-full blur-3xl ${uiTheme.background.softGlow}`} />
 
       <div className="relative">
-        <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-violet-500">
+        <p className={`flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] ${uiTheme.accent.eyebrow}`}>
           <Sparkles size={13} />
           {t('settings.eyebrow')}
         </p>

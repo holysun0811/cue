@@ -5,6 +5,7 @@ import { Lightbulb, Mic, Pause, Play, RotateCcw, Send, Volume2 } from 'lucide-re
 import { submitPractice } from '../api/client.js';
 import { blobToBase64 } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
+import { uiTheme } from '../lib/uiTheme.js';
 
 function languageKey(language = 'en') {
   if (language?.startsWith('zh')) return 'zh-CN';
@@ -63,18 +64,18 @@ function ExaminerMessage({ message, onPlay, playing }) {
     <div className="flex justify-start">
       <div className="max-w-[82%]">
         <div className="mb-1 flex items-center gap-2 px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] text-white">E</span>
+          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${uiTheme.accent.iconSoft}`}>E</span>
           {t('practice.examiner')}
         </div>
         <div className="flex items-start gap-2">
-          <div className="rounded-[22px] rounded-tl-md border border-white bg-white/88 p-3.5 shadow-[0_10px_24px_rgba(99,102,241,0.09)] backdrop-blur-xl">
+          <div className="rounded-[22px] rounded-tl-md border border-white bg-white/88 p-3.5 shadow-[0_10px_24px_rgba(91,92,126,0.09)] backdrop-blur-xl">
             <p className="text-[14px] font-semibold leading-relaxed text-slate-800">{message.text}</p>
           </div>
           {message.audioUrl && (
             <button
               aria-label={t('practice.playQuestion')}
-              className={`mt-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(14,165,233,0.12)] transition active:scale-95 ${
-                playing ? 'bg-sky-500 text-white' : 'bg-sky-50 text-sky-600'
+              className={`mt-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(239,106,31,0.1)] transition active:scale-95 ${
+                playing ? uiTheme.chip.selected : uiTheme.chip.muted
               }`}
               onClick={() => onPlay(message.audioUrl, message.id)}
               type="button"
@@ -134,7 +135,7 @@ function HighlightedPhrase({ keywords, text }) {
   matches.forEach((match, index) => {
     if (cursor < match.start) parts.push(text.slice(cursor, match.start));
     parts.push(
-      <mark className="rounded-md bg-violet-100 px-1 font-black text-violet-700" key={`${match.start}-${index}`}>
+      <mark className={`rounded-md px-1 font-black ${uiTheme.accent.mark}`} key={`${match.start}-${index}`}>
         {text.slice(match.start, match.end)}
       </mark>
     );
@@ -159,18 +160,18 @@ function UserGhostBubble({ hintData, state, visible }) {
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
       <div className="max-w-[78%]">
-        <div className="mb-1 px-1 text-right text-[10px] font-black uppercase tracking-[0.14em] text-violet-400/70">
+        <div className={`mb-1 px-1 text-right text-[10px] font-black uppercase tracking-[0.14em] ${uiTheme.accent.eyebrowMuted}`}>
           {t('practice.answerDraft')}
         </div>
         <div
-          className={`rounded-[22px] rounded-tr-md border border-dashed p-3 shadow-[0_12px_26px_rgba(99,102,241,0.08)] backdrop-blur-xl transition ${
+          className={`rounded-[22px] rounded-tr-md border border-dashed p-3 shadow-[0_12px_26px_rgba(91,92,126,0.08)] backdrop-blur-xl transition ${
             recording
-              ? 'border-violet-300/80 bg-violet-50/72 text-violet-700'
-              : 'border-violet-200/80 bg-white/54 text-slate-600'
+              ? `text-[#C6531A] ${uiTheme.selectable.selected}`
+              : 'border-[#F0E4D8]/80 bg-white/62 text-slate-600'
           }`}
         >
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-500">
+            <span className={`text-[10px] font-black uppercase tracking-[0.14em] ${uiTheme.accent.eyebrow}`}>
               {t('practice.phraseHint')}
             </span>
             {recording && (
@@ -215,10 +216,10 @@ function ExaminerTypingBubble({ showLabel }) {
     >
       <div className="max-w-[82%]">
         <div className="mb-1 flex items-center gap-2 px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-[10px] text-white">E</span>
+          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${uiTheme.accent.iconSoft}`}>E</span>
           {t('practice.examiner')}
         </div>
-        <div className="inline-flex items-center gap-2 rounded-[22px] rounded-tl-md border border-white bg-white/88 px-3.5 py-3 shadow-[0_10px_24px_rgba(99,102,241,0.09)] backdrop-blur-xl">
+        <div className="inline-flex items-center gap-2 rounded-[22px] rounded-tl-md border border-white bg-white/88 px-3.5 py-3 shadow-[0_10px_24px_rgba(91,92,126,0.09)] backdrop-blur-xl">
           <span className="flex items-center gap-1">
             {[0, 1, 2].map((i) => (
               <motion.span
@@ -282,10 +283,10 @@ function UserAudioMessage({ message }) {
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
       <div className="max-w-[78%]">
-        <div className="mb-1 px-1 text-right text-[10px] font-black uppercase tracking-[0.14em] text-violet-400">
+        <div className={`mb-1 px-1 text-right text-[10px] font-black uppercase tracking-[0.14em] ${uiTheme.accent.eyebrow}`}>
           {t('practice.you')}
         </div>
-        <div className="rounded-[22px] rounded-tr-md bg-gradient-to-br from-violet-500 to-sky-400 p-3 text-white shadow-[0_12px_26px_rgba(99,102,241,0.22)]">
+        <div className={`rounded-[22px] rounded-tr-md p-3 ${uiTheme.button.primary}`}>
           <div className="flex items-center gap-3">
             <button
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20"
@@ -432,10 +433,10 @@ function FloatingHintControl({ chatAreaRef, expanded, onToggle }) {
     <>
       <button
         aria-label={t('practice.hints')}
-        className={`absolute z-30 flex h-12 w-12 touch-none select-none items-center justify-center rounded-full border shadow-[0_12px_26px_rgba(99,102,241,0.16)] transition active:scale-95 ${
+        className={`absolute z-30 flex h-12 w-12 touch-none select-none items-center justify-center rounded-full border shadow-[0_12px_26px_rgba(239,106,31,0.16)] transition active:scale-95 ${
           expanded
-            ? 'border-violet-200 bg-gradient-to-br from-violet-500 to-sky-400 text-white'
-            : 'border-white/80 bg-white/82 text-violet-500 backdrop-blur-xl'
+            ? uiTheme.chip.selected
+            : `${uiTheme.surface.chip} ${uiTheme.accent.text}`
         }`}
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={handlePointerDown}
@@ -484,13 +485,13 @@ function VoiceComposer({
   };
 
   return (
-    <div className="border-t border-white/60 bg-white/42 px-4 pb-4 pt-3 backdrop-blur-xl">
+    <div className="border-t border-white/60 bg-white/50 px-4 pb-4 pt-3 backdrop-blur-xl">
       {recorderState === 'preview' && (
-        <div className="mb-2 rounded-[24px] border border-sky-100 bg-sky-50/86 p-2.5 text-sky-700 shadow-[0_10px_22px_rgba(14,165,233,0.08)]">
+        <div className={`mb-2 rounded-[24px] p-2.5 ${uiTheme.selectable.selected}`}>
           <div className="flex items-center gap-3">
             <button
               aria-label={t('practice.playRecording')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white shadow-[0_8px_18px_rgba(14,165,233,0.18)]"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-[0_8px_18px_rgba(239,106,31,0.16)] ${uiTheme.chip.selected}`}
               onClick={playPreview}
               type="button"
             >
@@ -500,7 +501,7 @@ function VoiceComposer({
             <span className="text-xs font-black">{formatDuration(pendingDuration)}</span>
             <button
               aria-label={t('practice.sayAgain')}
-              className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/82 text-slate-500 shadow-[0_6px_14px_rgba(15,23,42,0.08)] transition active:scale-95"
+              className={`ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:scale-95 ${uiTheme.button.secondary}`}
               onClick={onDeletePreview}
               type="button"
             >
@@ -508,7 +509,7 @@ function VoiceComposer({
             </button>
             <button
               aria-label={t('practice.send')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-sky-400 text-white shadow-[0_8px_18px_rgba(99,102,241,0.22)] transition active:scale-95"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:scale-95 ${uiTheme.button.primary}`}
               onClick={onSend}
               type="button"
             >
@@ -523,10 +524,10 @@ function VoiceComposer({
       <div className="flex items-center gap-2">
         {(recorderState === 'idle' || recorderState === 'recording') && (
           <button
-            className={`flex min-h-14 flex-1 select-none items-center justify-center gap-2 rounded-[26px] px-4 text-sm font-black text-white shadow-[0_14px_28px_rgba(99,102,241,0.22)] transition active:scale-[0.99] ${
+            className={`flex min-h-14 flex-1 select-none items-center justify-center gap-2 rounded-[26px] px-4 text-sm font-black text-white shadow-[0_14px_28px_rgba(239,76,47,0.22)] transition active:scale-[0.99] ${
               recorderState === 'recording'
-                ? 'bg-slate-950'
-                : 'bg-gradient-to-r from-violet-500 to-sky-400'
+                ? 'bg-[#C6531A]'
+                : uiTheme.button.primary
             }`}
             onContextMenu={(event) => event.preventDefault()}
             onPointerCancel={onHoldEnd}
@@ -547,7 +548,7 @@ function VoiceComposer({
         )}
         {recorderState === 'sending' && (
           <button
-            className="flex min-h-14 flex-1 items-center justify-center rounded-[26px] bg-slate-200 px-4 text-sm font-black text-slate-500"
+            className="flex min-h-14 flex-1 items-center justify-center rounded-[26px] bg-[#E8DED1] px-4 text-sm font-black text-[#9F927F] shadow-[0_8px_18px_rgba(128,99,70,0.08)]"
             disabled
             type="button"
           >
