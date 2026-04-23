@@ -417,7 +417,8 @@ export async function startLearnExploration(payload = {}) {
       ...mockLearnStart({ topicOrMaterial, appLanguage, targetLanguage, persona }),
       ...parsed
     };
-  } catch {
+  } catch (err) {
+    console.error('[learn/start] Gemini call failed, falling back to mock:', err);
     return mockLearnStart({ topicOrMaterial, appLanguage, targetLanguage, persona });
   }
 }
@@ -447,7 +448,8 @@ export async function continueLearnExploration(payload = {}) {
         ...(parsed.collectedState || {})
       }
     };
-  } catch {
+  } catch (err) {
+    console.error('[learn/continue] Gemini call failed, falling back to mock:', err);
     return mockLearnMessage({ session, message, appLanguage, targetLanguage });
   }
 }
