@@ -7,16 +7,28 @@ import { pageTransition } from '../lib/motion.js';
 import { uiTheme } from '../lib/uiTheme.js';
 
 const STEP_MARKS = [0.38, 0.72, 1];
-const MIN_DURATION_MS = 1800;
+const MIN_VISIBLE_MS = 450;
+const CRAWL_CAP = 0.92;
+const CRAWL_TAU = 650;
+const FINISH_MS = 260;
 
 export default function TopicLoadingScreen({ onPrepareTopic }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const topic = location.state?.topic;
+  const initialTopicRef = useRef(location.state?.topic);
+  const topic = initialTopicRef.current;
   const [progress, setProgress] = useState(0);
   const [errorKey, setErrorKey] = useState('');
-  const startedRef = useRef(false);
+  const prepareRef = useRef(onPrepareTopic);
+  const preparePromiseRef = useRef(null);
+  const animationStartRef = useRef(0);
+  const navigatedAwayRef = useRef(false);
+  const progressRef = useRef(0);
+
+  useEffect(() => {
+    prepareRef.current = onPrepareTopic;
+  }, [onPrepareTopic]);
 
   const steps = useMemo(
     () => [t('topicLoading.step1'), t('topicLoading.step2'), t('topicLoading.step3')],
@@ -28,33 +40,69 @@ export default function TopicLoadingScreen({ onPrepareTopic }) {
       navigate('/', { replace: true });
       return undefined;
     }
-    if (startedRef.current) return undefined;
-    startedRef.current = true;
 
-    const start = performance.now();
-    const duration = MIN_DURATION_MS;
+    if (!animationStartRef.current) animationStartRef.current = performance.now();
+    const start = animationStartRef.current;
     let raf = 0;
-    const tick = (now) => {
-      const ratio = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - ratio, 2.2);
-      setProgress(eased);
-      if (ratio < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    let phase = 'crawl';
 
-    const minDelay = new Promise((resolve) => setTimeout(resolve, MIN_DURATION_MS));
+    const setP = (value) => {
+      progressRef.current = value;
+      setProgress(value);
+    };
+
+    const crawl = (now) => {
+      if (phase !== 'crawl') return;
+      const elapsed = now - start;
+      const next = CRAWL_CAP * (1 - Math.exp(-elapsed / CRAWL_TAU));
+      setP(next);
+      raf = requestAnimationFrame(crawl);
+    };
+    raf = requestAnimationFrame(crawl);
+
+    if (!preparePromiseRef.current) {
+      const prepare = prepareRef.current;
+      preparePromiseRef.current = Promise.resolve()
+        .then(() => (prepare ? prepare(topic) : null));
+    }
+    const minVisible = new Promise((resolve) => {
+      const remaining = Math.max(0, MIN_VISIBLE_MS - (performance.now() - start));
+      setTimeout(resolve, remaining);
+    });
     let cancelled = false;
+
+    const finishThenNavigate = (sessionId) => new Promise((resolve) => {
+      phase = 'finish';
+      cancelAnimationFrame(raf);
+      const finishStart = performance.now();
+      const startProgress = progressRef.current;
+      const sprint = (now) => {
+        if (cancelled) return;
+        const r = Math.min(1, (now - finishStart) / FINISH_MS);
+        const eased = 1 - Math.pow(1 - r, 3);
+        setP(startProgress + (1 - startProgress) * eased);
+        if (r < 1) {
+          raf = requestAnimationFrame(sprint);
+        } else {
+          if (!navigatedAwayRef.current) {
+            navigatedAwayRef.current = true;
+            if (sessionId) {
+              navigate(`/learn/${sessionId}`, { replace: true });
+            } else {
+              navigate('/learn', { replace: true, state: { topic } });
+            }
+          }
+          resolve();
+        }
+      };
+      raf = requestAnimationFrame(sprint);
+    });
 
     (async () => {
       try {
-        const preparePromise = onPrepareTopic ? onPrepareTopic(topic) : Promise.resolve(null);
-        const [, sessionId] = await Promise.all([minDelay, preparePromise]);
-        if (cancelled) return;
-        if (sessionId) {
-          navigate(`/learn/${sessionId}`, { replace: true });
-        } else {
-          navigate('/learn', { replace: true });
-        }
+        const [, sessionId] = await Promise.all([minVisible, preparePromiseRef.current]);
+        if (cancelled || navigatedAwayRef.current) return;
+        await finishThenNavigate(sessionId);
       } catch {
         if (cancelled) return;
         setErrorKey('topicLoading.fallbackError');
@@ -65,7 +113,7 @@ export default function TopicLoadingScreen({ onPrepareTopic }) {
       cancelled = true;
       cancelAnimationFrame(raf);
     };
-  }, [navigate, onPrepareTopic, topic]);
+  }, [navigate, topic]);
 
   if (!topic) return null;
 
