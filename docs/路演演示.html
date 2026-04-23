@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Outspeak · 路演演示</title>
+<style>
+  /* ---------- 基础 ---------- */
+  :root {
+    --bg-0: #060814;
+    --bg-1: #0b1024;
+    --bg-2: #0f1736;
+    --ink-0: #ffffff;
+    --ink-1: rgba(255, 255, 255, 0.86);
+    --ink-2: rgba(255, 255, 255, 0.62);
+    --ink-3: rgba(255, 255, 255, 0.42);
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.16);
+    --card: rgba(255, 255, 255, 0.04);
+    --card-strong: rgba(255, 255, 255, 0.06);
+    --accent: #7aa2ff;
+    --accent-2: #b69bff;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+                 "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ---------- 舞台 ---------- */
+  .stage {
+    position: fixed; inset: 0;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    padding: 56px 72px 72px;
+    display: none;
+    flex-direction: column;
+    background:
+      radial-gradient(1200px 700px at 12% -10%, rgba(122, 162, 255, 0.18), transparent 60%),
+      radial-gradient(900px 600px at 110% 110%, rgba(182, 155, 255, 0.16), transparent 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+  }
+  .slide.is-active { display: flex; animation: fade .35s ease-out; }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* 水印 */
+  .watermark {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: .055;
+    background-image:
+      repeating-linear-gradient(-30deg,
+        transparent 0 120px,
+        rgba(255,255,255,0) 120px 121px);
+    mask-image: linear-gradient(180deg, #000 0%, #000 100%);
+  }
+  .watermark::before {
+    content: "Outspeak · 2026";
+    position: absolute; inset: -50%;
+    color: #fff;
+    font-size: 22px;
+    letter-spacing: 4px;
+    transform: rotate(-28deg);
+    line-height: 160px;
+    word-spacing: 80px;
+    white-space: pre;
+  }
+
+  /* ---------- 顶部 ---------- */
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+    z-index: 2;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--ink-1);
+    font-size: 13px; letter-spacing: .5px;
+    backdrop-filter: blur(8px);
+  }
+  .chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .pageno {
+    color: var(--ink-2);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- 标题 ---------- */
+  h1.title {
+    font-size: 56px;
+    line-height: 1.18;
+    margin: 8px 0 36px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    z-index: 2;
+  }
+  h1.title .accent {
+    background: linear-gradient(90deg, #fff 0%, #c9d6ff 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    color: var(--ink-2);
+    font-size: 16px;
+    margin: -20px 0 32px;
+    z-index: 2;
+  }
+
+  /* ---------- 卡片 ---------- */
+  .grid {
+    display: grid; gap: 24px;
+    flex: 1;
+    z-index: 2;
+  }
+  .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    position: relative;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+    border-radius: 18px;
+    padding: 28px 30px;
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+  }
+  .card::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: 18px;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 40%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+  }
+  .card .card-title {
+    font-size: 15px; font-weight: 600; color: var(--ink-1);
+    margin: 0 0 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card .card-title .num {
+    font-size: 12px;
+    color: var(--accent);
+    border: 1px solid rgba(122,162,255,.35);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .card ul {
+    margin: 0; padding: 0; list-style: none;
+    color: var(--ink-1); font-size: 15px; line-height: 1.95;
+  }
+  .card ul li {
+    position: relative; padding-left: 18px;
+  }
+  .card ul li::before {
+    content: ""; position: absolute; left: 0; top: 13px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .card .desc {
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.8;
+    margin: 8px 0 0;
+  }
+
+  /* 大字符卡：碎/散/断 */
+  .mega {
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .mega-row {
+    display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 18px;
+  }
+  .mega-char {
+    font-size: 64px; line-height: 1; font-weight: 800;
+    background: linear-gradient(180deg, #fff 0%, #9fb6ff 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+  .mega-text small {
+    display: block; color: var(--ink-3); font-size: 12px; letter-spacing: 2px; margin-bottom: 4px;
+  }
+  .mega-text p {
+    margin: 0; color: var(--ink-1); font-size: 15px; line-height: 1.7;
+  }
+
+  /* 底部 callout */
+  .callout {
+    margin-top: 24px;
+    padding: 18px 24px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: linear-gradient(90deg, rgba(122,162,255,.10), rgba(182,155,255,.06));
+    color: var(--ink-1);
+    font-size: 15px;
+    z-index: 2;
+  }
+
+  /* ---------- 底部控制 ---------- */
+  .bottom {
+    margin-top: 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--ink-3); font-size: 12px;
+    z-index: 2;
+  }
+  .nav-buttons {
+    display: flex; gap: 10px;
+  }
+  .btn {
+    padding: 8px 18px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255,255,255,.03);
+    color: var(--ink-1);
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.28); }
+
+  /* 右侧点导航 */
+  .dots {
+    position: fixed; right: 22px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 5;
+  }
+  .dots button {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 0; padding: 0; cursor: pointer;
+    background: rgba(255,255,255,.18);
+    transition: transform .15s, background .15s;
+  }
+  .dots button.active {
+    background: var(--accent);
+    transform: scale(1.4);
+    box-shadow: 0 0 10px var(--accent);
+  }
+
+  /* ---------- 封面 ---------- */
+  .cover {
+    align-items: flex-start; justify-content: center;
+  }
+  .cover .brand {
+    font-size: 14px; letter-spacing: 6px; color: var(--ink-2); margin-bottom: 18px;
+  }
+  .cover h1 {
+    font-size: 96px; line-height: 1.05; margin: 0 0 24px;
+    font-weight: 800; letter-spacing: -1.5px;
+  }
+  .cover h1 .grad {
+    background: linear-gradient(90deg, #7aa2ff 0%, #b69bff 60%, #f5b8ff 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .lead {
+    color: var(--ink-2); font-size: 20px; max-width: 760px; line-height: 1.7;
+  }
+  .cover .meta {
+    margin-top: 48px; display: flex; gap: 28px; color: var(--ink-3); font-size: 13px;
+  }
+  .cover .meta b { color: var(--ink-1); font-weight: 600; }
+
+  /* ---------- 步骤链路 ---------- */
+  .pipeline {
+    margin-top: 16px;
+    display: flex; align-items: stretch; gap: 12px;
+  }
+  .pipe-step {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,.03);
+  }
+  .pipe-step .k { font-size: 12px; color: var(--accent); letter-spacing: 1.5px; }
+  .pipe-step .v { font-size: 16px; margin-top: 6px; color: var(--ink-1); font-weight: 600; }
+  .pipe-arrow {
+    align-self: center;
+    color: var(--ink-3);
+    font-size: 18px;
+  }
+
+  /* ---------- 对比表 ---------- */
+  .compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 8px;
+  }
+  .compare .col h4 {
+    margin: 0 0 12px; font-size: 13px; letter-spacing: 1.5px;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .compare .col.right h4 { color: var(--accent); }
+  .compare .row {
+    padding: 12px 14px; border-radius: 10px;
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--line);
+    color: var(--ink-1); font-size: 14px; line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  /* ---------- 商业模式三层 ---------- */
+  .tier {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .tier .badge {
+    align-self: flex-start;
+    font-size: 12px; letter-spacing: 1.5px;
+    color: var(--accent);
+    border: 1px solid rgba(122,162,255,.35);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .tier h3 { margin: 4px 0 6px; font-size: 22px; }
+  .tier .price { color: var(--ink-2); font-size: 13px; margin-bottom: 8px; }
+
+  /* ---------- 总结大字 ---------- */
+  .big-quote {
+    margin-top: 24px;
+    font-size: 36px; line-height: 1.4; font-weight: 700;
+    color: var(--ink-0);
+    max-width: 1100px;
+  }
+  .big-quote .grad {
+    background: linear-gradient(90deg, #7aa2ff, #b69bff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* 响应 */
+  @media (max-width: 1100px) {
+    .slide { padding: 36px 40px 56px; }
+    h1.title { font-size: 40px; }
+    .cover h1 { font-size: 64px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <!-- ============ 1 封面 ============ -->
+  <section class="slide cover" data-chip="Outspeak">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Hackathon · Pitch</span>
+      <span class="pageno">01 / 09</span>
+    </div>
+
+    <div class="brand">O U T S P E A K</div>
+    <h1>From ideas to <span class="grad">spoken answers</span>.</h1>
+    <p class="lead">
+      一个面向口语学习与口语考试的 AI 训练系统。<br/>
+      帮助用户从"看懂题目"，一路走到"真实开口、被追问、被复盘"。
+    </p>
+
+    <div class="meta">
+      <span><b>Outspeak</b> · 口语训练 AI</span>
+      <span>2026 · 路演演示</span>
+    </div>
+
+    <div class="bottom" style="margin-top:auto;">
+      <span>使用 ← / → 翻页，按 F 进入全屏</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 我们在做什么 ============ -->
+  <section class="slide" data-chip="What">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>What we're building</span>
+      <span class="pageno">02 / 09</span>
+    </div>
+
+    <h1 class="title">不是题库，不是范文，<br/>是一套 <span class="accent">完整的开口训练系统</span></h1>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title"><span class="num">01</span>核心定位</div>
+        <p class="desc" style="font-size:15px;color:var(--ink-1);line-height:1.85;">
+          Outspeak 是一个面向口语学习与口语考试的 AI 产品。<br/><br/>
+          它不是单纯的题库，也不是只提供范文或单词，而是帮助用户从"看懂题目"，一路走到"真实开口作答、被追问、被复盘"的完整训练系统。
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">02</span>核心目标</div>
+        <p class="desc" style="font-size:15px;color:var(--ink-1);line-height:1.85;">
+          我们的核心目标不是让用户"学更多内容"，而是帮助用户在真实考试或真实表达场景里，<b style="color:#fff">真正说出来</b>。
+        </p>
+        <div class="pipeline" style="margin-top:18px;">
+          <div class="pipe-step"><div class="k">INPUT</div><div class="v">题目 / 主题</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step"><div class="k">CORE</div><div class="v">真实开口</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step"><div class="k">OUTPUT</div><div class="v">可被复盘的表达</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">一句话：让用户从"知道答案"走到"能说出答案"。</div>
+
+    <div class="bottom">
+      <span>讲这页时强调：我们不是再做一个题库或范文工具</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 用户是谁 ============ -->
+  <section class="slide" data-chip="Who">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Who is it for</span>
+      <span class="pageno">03 / 09</span>
+    </div>
+
+    <h1 class="title">用户的需求不是"加分项"，<br/>而是 <span class="accent">必须面对的任务</span></h1>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title"><span class="num">01</span>核心用户画像</div>
+        <ul>
+          <li>准备英语口语考试的学生</li>
+          <li>有留学、升学、面试需求的人</li>
+          <li>有一定输入基础，但缺少真实开口训练</li>
+          <li>想提升表达、自信和应试能力的语言学习者</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">02</span>他们真正面对的问题</div>
+        <p class="desc" style="color:var(--ink-2);font-size:14px;margin-bottom:14px;">
+          不是"有没有题目 / 范文 / 单词"，而是：
+        </p>
+        <ul>
+          <li>到了考试现场，能不能<b style="color:#fff">当场开口</b></li>
+          <li>开口之后，能不能<b style="color:#fff">持续说下去</b></li>
+          <li>被追问时，能不能<b style="color:#fff">继续完成表达</b></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">对他们来说，口语不是"加分项"，而是必须当场完成的任务。</div>
+
+    <div class="bottom">
+      <span>讲这页时先讲学生真实场景，不先讲 AI</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 4 个断点 ============ -->
+  <section class="slide" data-chip="Problem">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>The 4 breakpoints</span>
+      <span class="pageno">04 / 09</span>
+    </div>
+
+    <h1 class="title">"说不出来"不是单一问题，<br/>而是 <span class="accent">4 个连续断点</span></h1>
+
+    <div class="grid cols-4">
+      <div class="card">
+        <div class="card-title"><span class="num">01</span>没有内容可说</div>
+        <p class="desc">即使用母语，也未必能把交叉学科的题目讲清楚——缺知识点、缺视角、缺例子。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">02</span>不会组织答案</div>
+        <p class="desc">脑子里有零散想法，但不知道第一层怎么起步、第二层怎么展开、第三层怎么收住。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">03</span>不会顺畅表达</div>
+        <p class="desc">心里有答案，却卡顿、重复、句子不完整，词汇和语法支撑不住表达。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">04</span>不会应对互动</div>
+        <p class="desc">真实考试是动态过程，一旦被追问就中断，没办法继续解释、补充或举例。</p>
+      </div>
+    </div>
+
+    <div class="callout">用户缺的不是"口语能力"，而是从理解、组织、表达、到互动的<b style="color:#fff">完整支持</b>。</div>
+
+    <div class="bottom">
+      <span>这页是 Why Now —— 让评委看到完整断点链</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 解决方案 ============ -->
+  <section class="slide" data-chip="Solution">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Our solution</span>
+      <span class="pageno">05 / 09</span>
+    </div>
+
+    <h1 class="title">按 4 个断点 <span class="accent">逐层补位</span>，<br/>形成一个完整训练闭环</h1>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title"><span class="num">01</span>先补"可说的内容"</div>
+        <ul>
+          <li>核心知识点</li>
+          <li>关键视角</li>
+          <li>可用例子</li>
+          <li>推荐题目方向</li>
+        </ul>
+        <p class="desc" style="margin-top:10px;">先解决"脑子里没东西"的问题。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">02</span>再搭"可回答的结构"</div>
+        <ul>
+          <li>答题思路</li>
+          <li>回答框架</li>
+          <li>关键词和短语</li>
+          <li>Sample answer</li>
+        </ul>
+        <p class="desc" style="margin-top:10px;">把"不会开始说"变成"知道怎么答"。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">03</span>再进入真实互动练习</div>
+        <ul>
+          <li>AI Examiner 用目标语言发问</li>
+          <li>持续追问</li>
+          <li>引导用户解释、举例、补充</li>
+        </ul>
+        <p class="desc" style="margin-top:10px;">训练动态表达能力，而非静态背诵。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">04</span>最后给出可执行复盘</div>
+        <ul>
+          <li>这一轮最该改的点</li>
+          <li>更好的表达版本</li>
+          <li>下一轮如何说得更完整、更自然</li>
+        </ul>
+        <p class="desc" style="margin-top:10px;">复盘必须可执行，而不是泛泛点评。</p>
+      </div>
+    </div>
+
+    <div class="pipeline" style="margin-top:18px;">
+      <div class="pipe-step"><div class="k">STEP 1</div><div class="v">理解内容</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 2</div><div class="v">组织结构</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 3</div><div class="v">开口作答</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 4</div><div class="v">应对追问</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 5</div><div class="v">复盘提升</div></div>
+    </div>
+
+    <div class="bottom">
+      <span>关键词：闭环 · Examiner · 可执行复盘</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 与传统工具对比 ============ -->
+  <section class="slide" data-chip="Differentiation">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Why us</span>
+      <span class="pageno">06 / 09</span>
+    </div>
+
+    <h1 class="title">传统工具教"学什么"，<br/>Outspeak 帮你解决 <span class="accent">"怎么在考试里说出来"</span></h1>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-title">传统工具：静态知识</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="row">题库 / 范文 / 单词 / 语法讲解</div>
+          <div class="row">解决的是"学什么"</div>
+          <div class="row">提供的是静态内容</div>
+          <div class="row">考察"会不会背"</div>
+          <div class="row">反馈泛泛：流利点、词汇多点</div>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(122,162,255,.35);background:linear-gradient(180deg,rgba(122,162,255,.10),rgba(255,255,255,.02));">
+        <div class="card-title" style="color:#fff;">Outspeak：动态训练</div>
+        <div class="compare" style="grid-template-columns:1fr;">
+          <div class="row">先帮用户补内容（知识点 + 视角 + 例子）</div>
+          <div class="row">再帮用户搭结构（思路 + 框架 + Sample）</div>
+          <div class="row">AI Examiner 多轮追问，模拟真实考场</div>
+          <div class="row">每轮给出"下一轮可执行"的改进点</div>
+          <div class="row">完成"理解 → 组织 → 开口 → 互动 → 复盘"全链路</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout"><b style="color:#fff">价值定位：</b>我们补上了用户最难的一段——从"知道答案"到"考场说出答案"。</div>
+
+    <div class="bottom">
+      <span>这页是核心差异化，建议讲慢一点</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7 产品体验 ============ -->
+  <section class="slide" data-chip="Product">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Product experience</span>
+      <span class="pageno">07 / 09</span>
+    </div>
+
+    <h1 class="title">用户拿到的不是"刷题"，<br/>而是 <span class="accent">一条完整链路</span></h1>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="card-title"><span class="num">场景 1</span>Explore</div>
+        <p class="desc" style="font-size:15px;color:var(--ink-1);line-height:1.85;">
+          从一个 topic 开始，快速理解主题、建立背景知识、补足"可说的内容"，再逐步展开更深入的讨论。
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">场景 2</span>Oral Exam</div>
+        <p class="desc" style="font-size:15px;color:var(--ink-1);line-height:1.85;">
+          进入真实口语模考。AI Examiner 像真实考官一样发问、追问，用户必须真正开口回答，而不是看答案。
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="num">场景 3</span>Review</div>
+        <p class="desc" style="font-size:15px;color:var(--ink-1);line-height:1.85;">
+          每一轮结束后，给出清晰的复盘：最该改的一个点、更好的说法、下一轮如何提升。
+        </p>
+      </div>
+    </div>
+
+    <div class="callout">用户拿到的不是"静态内容"，而是<b style="color:#fff">一个能持续提升的训练闭环</b>。</div>
+
+    <div class="bottom">
+      <span>如条件允许，配 Demo 截图或现场演示</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8 商业模式 ============ -->
+  <section class="slide" data-chip="Business">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Business model</span>
+      <span class="pageno">08 / 09</span>
+    </div>
+
+    <h1 class="title">三层结构：<span class="accent">免费体验 · 订阅权益 · 超额充值</span></h1>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="tier">
+          <span class="badge">LAYER 01</span>
+          <h3>免费体验</h3>
+          <div class="price">10–30 分钟 Oral Exam 体验时长</div>
+          <ul>
+            <li>感受 AI Examiner 的多轮追问</li>
+            <li>体验真实考试的互动感</li>
+            <li>看到 Review 复盘的价值</li>
+          </ul>
+          <p class="desc" style="margin-top:10px;">先让用户感受核心能力，再推动转化。</p>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(122,162,255,.35);background:linear-gradient(180deg,rgba(122,162,255,.12),rgba(255,255,255,.02));">
+        <div class="tier">
+          <span class="badge">LAYER 02 · 主力</span>
+          <h3>订阅权益</h3>
+          <div class="price">面向长期学习用户的月度订阅</div>
+          <ul>
+            <li>高频 Learn / Explore 使用</li>
+            <li>持续的 AI 陪练</li>
+            <li>更完整的复盘能力</li>
+            <li>每周期附赠固定 Oral Exam 时长</li>
+          </ul>
+          <p class="desc" style="margin-top:10px;">订阅 = 一整套持续学习权益，而非抽象会员。</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tier">
+          <span class="badge">LAYER 03</span>
+          <h3>超额充值</h3>
+          <div class="price">考前冲刺 · 高密度模考</div>
+          <ul>
+            <li>30 分钟加油包</li>
+            <li>60 分钟冲刺包</li>
+            <li>120 分钟强化包</li>
+          </ul>
+          <p class="desc" style="margin-top:10px;">订阅时长用完后，按需购买额外训练时长。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">免费体验负责<b style="color:#fff">转化</b>，订阅提供<b style="color:#fff">基础权益</b>，超额充值满足<b style="color:#fff">高强度需求</b>。</div>
+
+    <div class="bottom">
+      <span>讲这页强调：我们卖的是"训练时长"，不是"题库"</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9 总结 ============ -->
+  <section class="slide" data-chip="Summary">
+    <div class="watermark"></div>
+    <div class="top">
+      <span class="chip"><span class="dot"></span>Closing</span>
+      <span class="pageno">09 / 09</span>
+    </div>
+
+    <h1 class="title">Outspeak 解决的，<br/>不是"会不会英语"</h1>
+
+    <div class="big-quote">
+      而是用户如何从 <span class="grad">"没有内容可说"</span>，<br/>
+      走到 <span class="grad">"能在真实考试中说出来"</span>。
+    </div>
+
+    <div class="pipeline" style="margin-top:36px;">
+      <div class="pipe-step"><div class="k">STEP 1</div><div class="v">理解内容</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 2</div><div class="v">组织结构</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 3</div><div class="v">开口作答</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 4</div><div class="v">应对追问</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="k">STEP 5</div><div class="v">复盘提升</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:auto;">
+      Outspeak 不是一个静态内容工具，而是一个帮助用户完成<b style="color:#fff">真实口语输出</b>的 AI 训练系统。
+    </div>
+
+    <div class="bottom">
+      <span>谢谢观看 · Q&amp;A</span>
+      <div class="nav-buttons">
+        <button class="btn" data-prev>上一页</button>
+        <button class="btn" data-next>下一页</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 右侧点导航 -->
+<div class="dots" id="dots"></div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsRoot = document.getElementById('dots');
+  let idx = 0;
+
+  // 构建 dots
+  slides.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.addEventListener('click', () => go(i));
+    dotsRoot.appendChild(b);
+  });
+  const dots = Array.from(dotsRoot.children);
+
+  function go(n) {
+    idx = (n + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    location.hash = String(idx + 1);
+  }
+  function next() { go(idx + 1); }
+  function prev() { go(idx - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { next(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { prev(); e.preventDefault(); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', next));
+  document.querySelectorAll('[data-prev]').forEach(b => b.addEventListener('click', prev));
+
+  // 支持 hash 直链
+  const initial = parseInt(location.hash.replace('#', ''), 10);
+  go(Number.isFinite(initial) && initial > 0 ? initial - 1 : 0);
+</script>
+
+</body>
+</html>
