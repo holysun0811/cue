@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { BookOpenText, Camera, Check, ChevronRight, MessageCircle, Mic, Send, Sparkles, X } from 'lucide-react';
+import { BookOpenText, Camera, Check, ChevronRight, Mic, Send, Sparkles, X } from 'lucide-react';
 import { fileToDataUrl, createSpeechRecognition } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
 import { targetLanguagePrompts } from '../lib/practicePrompts.js';
@@ -516,10 +516,6 @@ export default function LearnScreen({ busy, errorKey, learnSession, onBuildBridg
           setTitleProgress((current) => (Math.abs(current - nextProgress) < 0.01 ? current : nextProgress));
         }}
       >
-        <div className={`mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] ${uiTheme.accent.eyebrow}`}>
-          <MessageCircle size={14} />
-          {t('learn.thread')}
-        </div>
         <div className="space-y-2 pb-3">
           {chatHistory.map((message, index) => (
             <div key={`${message.role}-${index}`}>
