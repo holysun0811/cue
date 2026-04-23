@@ -8,7 +8,7 @@ import { RecentCoverThumb } from '../components/RecentCover.jsx';
 function RecentPracticeRow({ item, onClick }) {
   return (
     <motion.button
-      className="flex min-h-[86px] w-full items-center gap-3 rounded-[22px] border border-white/80 bg-white/88 p-3 text-left shadow-[0_12px_26px_rgba(91,92,126,0.08)] backdrop-blur-xl transition active:translate-y-0.5"
+      className="flex min-h-[86px] w-full items-center gap-3 rounded-[22px] border border-[#F0E4D8]/80 bg-white/84 p-3 text-left shadow-[0_10px_22px_rgba(91,92,126,0.07)] backdrop-blur-xl transition hover:bg-white/94 active:translate-y-0.5"
       onClick={onClick}
       type="button"
       whileTap={{ scale: 0.985 }}
@@ -16,7 +16,7 @@ function RecentPracticeRow({ item, onClick }) {
       <RecentCoverThumb cover={item.coverPayload} />
       <span className="min-w-0 flex-1">
         <span className="mb-1 flex min-w-0 items-center gap-2">
-          <span className="shrink-0 rounded-full bg-orange-50 px-2 py-1 text-[10px] font-black text-[#EF4C2F]">
+          <span className="shrink-0 rounded-full border border-[#F0E4D8]/80 bg-[#FFF9F2]/86 px-2 py-1 text-[10px] font-black text-slate-500">
             {item.modeLabel}
           </span>
           {item.updatedLabel && (

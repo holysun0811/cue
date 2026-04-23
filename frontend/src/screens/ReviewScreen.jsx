@@ -160,16 +160,17 @@ export default function ReviewScreen({ onReviewPatch, onTakeTwo, session }) {
             {otherFixes.length > 0 && (
               <div className={`rounded-[22px] p-4 ${uiTheme.surface.elevated}`}>
                 <p className="mb-2.5 text-sm font-black tracking-tight text-slate-900">{t('review.otherNotes')}</p>
-                <div className="space-y-2">
-                  {otherFixes.map((fix, i) => (
-                    <p
-                      className={`rounded-2xl px-3 py-2.5 text-sm font-bold leading-snug text-slate-700 ${uiTheme.surface.subtle}`}
-                      key={i}
+                <ul className="space-y-2">
+                  {otherFixes.map((fix) => (
+                    <li
+                      className={`flex items-start gap-2 rounded-2xl px-3 py-2.5 text-sm font-bold leading-snug text-slate-700 ${uiTheme.surface.subtle}`}
+                      key={fix}
                     >
-                      {i + 2}. {fix}
-                    </p>
+                      <span className="mt-[0.48em] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                      <span>{fix}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 

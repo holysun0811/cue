@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight, ScanLine, ScrollText } from 'lucide-react';
 import { pageTransition, springPop, staggerContainer } from '../lib/motion.js';
 import { PRESET_TOPICS } from '../lib/homeTopics.js';
-import { RecentCoverBackdrop } from '../components/RecentCover.jsx';
+import { RecentCoverThumb } from '../components/RecentCover.jsx';
 
 function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, title }) {
   const styles =
@@ -52,21 +52,20 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
 function RecentPracticeCard({ item, onClick }) {
   return (
     <motion.button
-      className="relative flex h-[126px] w-[154px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-white/35 p-3 text-left text-white shadow-[0_14px_28px_rgba(91,92,126,0.14)] transition active:translate-y-0.5"
+      className="relative flex h-[122px] w-[162px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-[#F0E4D8]/80 bg-white/82 p-3 text-left shadow-[0_10px_22px_rgba(91,92,126,0.07)] backdrop-blur-xl transition hover:bg-white/94 active:translate-y-0.5"
       onClick={onClick}
       type="button"
       whileTap={{ scale: 0.97 }}
     >
-      <RecentCoverBackdrop cover={item.coverPayload} />
       <span className="relative flex items-start justify-between gap-2">
-        <span className="text-[28px] leading-none">{item.emoji}</span>
-        <span className="max-w-[76px] truncate rounded-full bg-white/24 px-2 py-1 text-[10px] font-black text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-md">
+        <RecentCoverThumb cover={item.coverPayload} />
+        <span className="max-w-[80px] truncate rounded-full border border-[#F0E4D8]/80 bg-[#FFF9F2]/86 px-2 py-1 text-[10px] font-black text-slate-500">
           {item.modeLabel}
         </span>
       </span>
       <div className="relative min-w-0">
-        <h4 className="line-clamp-2 text-[14px] font-black leading-tight tracking-tight text-white drop-shadow-[0_1px_6px_rgba(15,23,42,0.18)]">{item.title}</h4>
-        <p className="mt-1 truncate text-[11px] font-bold text-white/82">{item.secondaryMeta}</p>
+        <h4 className="line-clamp-2 text-[14px] font-black leading-tight tracking-tight text-slate-900">{item.title}</h4>
+        <p className="mt-1 truncate text-[11px] font-bold text-slate-400">{item.secondaryMeta}</p>
       </div>
     </motion.button>
   );
