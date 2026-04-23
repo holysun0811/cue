@@ -210,10 +210,10 @@ function UserGhostBubble({ hintData, state, visible }) {
             )}
           </div>
 
-          <div className="space-y-1.5 text-right">
+          <div className="space-y-2 text-left">
             {items.map((item, index) => (
               <p
-                className="rounded-2xl bg-white/62 px-3 py-2 text-xs font-bold leading-snug"
+                className="rounded-2xl bg-white/62 px-3.5 py-2.5 text-[13px] font-bold leading-relaxed"
                 key={`${item}-${index}`}
               >
                 <HighlightedPhrase keywords={keywords} text={item} />
@@ -222,7 +222,7 @@ function UserGhostBubble({ hintData, state, visible }) {
           </div>
 
           {!items.length && (
-            <p className="rounded-2xl bg-white/62 px-3 py-2 text-right text-xs font-bold text-slate-400">{t('practice.noHints')}</p>
+            <p className="rounded-2xl bg-white/62 px-3.5 py-2.5 text-left text-[13px] font-bold text-slate-400">{t('practice.noHints')}</p>
           )}
         </div>
       </div>

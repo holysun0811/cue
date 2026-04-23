@@ -168,10 +168,10 @@ export default function HomeScreen({
             </button>
           )}
         </div>
-        <div className="-mx-5 mt-3">
+        <div className="-mr-5 mt-3">
           {recentItems.length > 0 ? (
             <div className="relative">
-              <div className="flex snap-x gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-0 pr-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {recentItems.map((item) => (
                   <RecentPracticeCard item={item} key={item.id} onClick={() => onOpenRecent?.(item)} />
                 ))}
@@ -179,9 +179,7 @@ export default function HomeScreen({
               <div className="pointer-events-none absolute inset-y-0 right-0 w-9 bg-gradient-to-l from-[#FFF7EE] to-transparent" />
             </div>
           ) : (
-            <div className="px-5">
-              <RecentEmpty t={t} />
-            </div>
+            <RecentEmpty t={t} />
           )}
         </div>
       </section>
