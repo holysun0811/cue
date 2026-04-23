@@ -28,6 +28,7 @@ import {
   buildSpeakHistoryItem,
   copyRecentCoverMetadata,
   describePracticeHistoryItems,
+  routeForSpeakSession,
   stampSession,
   upsertPracticeHistory
 } from './lib/practiceHistory.js';
@@ -287,8 +288,12 @@ export default function App() {
         ...DEFAULT_SESSION,
         ...snapshot
       };
-      setSession(nextSession);
-      navigate(historyItem.lastRoute || snapshot.lastRoute || '/speak/prep');
+      const nextRoute = routeForSpeakSession(nextSession);
+      setSession({
+        ...nextSession,
+        lastRoute: nextRoute
+      });
+      navigate(nextRoute);
     }
   };
 
@@ -623,7 +628,7 @@ export default function App() {
         ...current,
         ...sourceSession,
         lastRoute: '/speak/practice',
-        round: 1,
+        round: sourceSession.round || 1,
         hintLevel: 'phrases',
         hintSupportLevel: 'strong_support',
         conversationMessages: [],
@@ -649,6 +654,15 @@ export default function App() {
     navigate('/speak/prep', { replace: true });
   };
 
+  const goBackFromRetryPrep = () => {
+    if ((window.history.state?.idx ?? 0) > 1) {
+      navigate(-2);
+      return;
+    }
+
+    navigate('/', { replace: true });
+  };
+
   const finishPractice = (conversationMessages) => {
     const messages = conversationMessages || session.conversationMessages || [];
     const latestAttempt = buildFinishedPracticeAttempt({
@@ -665,7 +679,7 @@ export default function App() {
         latestReview: null
       });
     });
-    navigate('/speak/review', { replace: true });
+    navigate('/speak/review', { replace: true, state: { replacedPracticeWithReview: true } });
   };
 
   const confirmFinishPractice = () => {
@@ -685,14 +699,17 @@ export default function App() {
       updateSession({
         round: response.nextRound,
         hintLevel: response.hintLevel,
-        lastRoute: '/speak/practice',
+        lastRoute: '/speak/prep',
         take2Goal: response.take2Goal,
         conversationMessages: [],
         latestAttempt: null,
         latestReview: null
       });
     });
-    navigate('/speak/practice', { replace: true });
+    navigate('/speak/prep', {
+      replace: true,
+      state: { skipDuplicatePrepOnBack: Boolean(location.state?.replacedPracticeWithReview) }
+    });
   };
 
   return (
@@ -704,7 +721,13 @@ export default function App() {
       <section className="relative flex min-h-screen items-center justify-center px-4 py-8">
         <PhoneFrame overlay={<GlobalLoadingOverlay label={globalLoadingLabel} show={showGlobalLoading} />}>
           <Header
-            onBack={step === 'review' ? goPrepFromReview : null}
+            onBack={
+              step === 'review'
+                ? goPrepFromReview
+                : step === 'prep' && location.state?.skipDuplicatePrepOnBack
+                  ? goBackFromRetryPrep
+                  : null
+            }
             rightSlot={
               step === 'practice' && practiceUserMessageCount > 0 ? (
                 <motion.button

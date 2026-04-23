@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { flushSync } from 'react-dom';
 import { BookOpenText, Camera, Check, ChevronRight, Mic, Send, Sparkles, X } from 'lucide-react';
 import { fileToDataUrl, createSpeechRecognition } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
@@ -54,6 +55,12 @@ function TopicRecapSheet({ busy, collectedState, onBuildBridge, onClose, open, t
     if (!open) setSelectedPromptId('');
   }, [open]);
 
+  const startPractice = () => {
+    if (!selectedPrompt || busy) return;
+    flushSync(() => onClose());
+    onBuildBridge(selectedPrompt);
+  };
+
   return (
     <BottomSheet
       footer={(
@@ -68,7 +75,7 @@ function TopicRecapSheet({ busy, collectedState, onBuildBridge, onClose, open, t
           <button
             className={`flex min-h-10 flex-[1.25] items-center justify-center rounded-2xl px-3 text-xs font-black transition ${uiTheme.button.primary} ${uiTheme.button.primaryDisabled}`}
             disabled={!selectedPrompt || busy}
-            onClick={() => onBuildBridge(selectedPrompt)}
+            onClick={startPractice}
             type="button"
           >
             {busy ? t('learn.thinking') : selectedPrompt ? t('learn.startSelectedPrompt') : t('learn.choosePromptFirst')}

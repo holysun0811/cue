@@ -246,8 +246,8 @@ export function resolveSpeakMode(session = {}) {
 }
 
 export function routeForSpeakSession(session = {}) {
+  if (session.latestReview || session.latestAttempt) return '/speak/review';
   if (session.lastRoute?.startsWith('/speak/')) return session.lastRoute;
-  if (session.latestReview) return '/speak/review';
   if ((session.conversationMessages || []).length) return '/speak/practice';
   return '/speak/prep';
 }

@@ -906,43 +906,61 @@ export async function generateActionableReview(payload = {}) {
   }
 
   const prompt = `
-You are Cue, a school oral-task rehearsal coach.
-Review this practice attempt. Be concise and actionable.
+You are Cue, a school oral-task review coach.
+Judge ONE practice attempt by a learner. Be concise, specific, actionable.
+You only have the transcript — you cannot hear real audio, so pronunciation can only be inferred indirectly (transcription gaps, mis-heard words, self-corrections, repeated restarts visible as fillers).
 
-Task type: ${taskType}
-Prompt summary: ${promptSummary}
-App language: ${appLanguage}
-Target language: ${targetLanguage}
-Round: ${round}
-Speaking plan: ${JSON.stringify(speakingPlan)}
-Full practice conversation:
+Inputs:
+- Task type: ${taskType}
+- Exam prompt: ${promptSummary || '(none)'}
+- App language (all explanations use this): ${appLanguage}
+- Target language (only the imitation texts use this): ${targetLanguage}
+- Round: ${round}
+- Speaking plan the learner prepared with: ${JSON.stringify(speakingPlan)}
+
+Full practice conversation (assistant = examiner, user = learner):
 ${conversationText || '(not provided)'}
 
-Learner answers transcript:
-${reviewTranscript}
+Aggregated learner transcript (all user turns concatenated):
+${reviewTranscript || '(empty)'}
 
-Return strict JSON:
+Return strict JSON only, no prose:
 {
-  "summary": "one short overall summary",
+  "summary": "<= 25 ${appLanguage} words, one sentence naming what worked + the single biggest thing to fix",
   "topIssues": [
-    "action fix 1",
-    "action fix 2",
-    "action fix 3"
+    "fix #1 — HIGHEST priority, <= 15 ${appLanguage} words, imperative verb + specific behaviour to change",
+    "fix #2 — second priority, same shape, cover a DIFFERENT dimension than #1",
+    "fix #3 — third priority, same shape, cover a DIFFERENT dimension than #1 and #2"
   ],
-  "betterVersion": { "text": "short version close to learner level" },
-  "topVersion": { "text": "more advanced but still speakable version" },
-  "scores": { "fluency": 0, "vocabulary": 0, "pronunciation": 0, "structure": 0 },
-  "take2Goal": "one concrete next-round goal",
-  "recommendedHintLevel": "outline|phrases|keywords|off"
+  "betterVersion": { "text": "<= 40 ${targetLanguage} words, rewritten answer in the learner's current register so they can realistically say it out loud" },
+  "topVersion":    { "text": "<= 55 ${targetLanguage} words, one step more advanced but still speakable for a high-school learner — no rare vocabulary, no long subordinate chains" },
+  "scores": {
+    "fluency":       0,
+    "vocabulary":    0,
+    "pronunciation": 0,
+    "structure":     0
+  },
+  "take2Goal": "<= 12 ${appLanguage} words, ONE concrete behaviour the learner should change in the next take",
+  "recommendedHintLevel": "outline | phrases | keywords"
 }
 
-Rules:
-- topIssues must contain exactly 3 action-oriented fixes.
-- summary, topIssues, take2Goal, and explanatory feedback must use appLanguage.
-- betterVersion.text and topVersion.text must use targetLanguage because the student imitates them.
-- Better Version should be short enough to imitate.
-- Top Version is secondary, not absurdly advanced.
-- Avoid vague praise dumps.
+Scoring (0-100 integers, honest not polite):
+- fluency: pacing, fillers, self-corrections, restarts visible in the transcript.
+- vocabulary: lexical range and appropriateness for a high-school speaking task.
+- pronunciation: transcript-only signal. Use transcription gaps, mis-transcribed words, repeated retries as evidence. If the transcript is clean and fluent, cap pronunciation at 80 — do not return 90+ without real evidence.
+- structure: coverage of opening → reason/detail → conclusion for this task type.
+
+Hard rules:
+- topIssues[0] MUST be the single most important fix; the UI highlights it as the primary action. Rank by impact, not by time order.
+- topIssues are exactly 3 ACTIONABLE fixes, never praise. Use imperative ${appLanguage} verbs.
+- The three fixes must cover DIFFERENT dimensions (e.g. content / structure, delivery / fluency, language / vocabulary). Do not give three synonymous tips.
+- summary / topIssues / take2Goal are written in ${appLanguage}.
+- betterVersion.text and topVersion.text are written in ${targetLanguage}, because the learner will imitate them aloud.
+- Never mix two languages inside a single string; never add translations or romanisation.
+- Do not copy wording from the speaking plan verbatim — paraphrase so the learner is not just memorising the prep sheet.
+- recommendedHintLevel reflects how much scaffolding the learner needs next round: outline (most support) < phrases < keywords (least). Return exactly one of these three values. Do NOT return "off" or any other value.
+- If the aggregated learner transcript is empty or clearly unusable, still return valid JSON: every score <= 30, summary states there was no usable speech, topIssues are 3 basic starter actions, take2Goal is something like "speak at least one full sentence on topic".
+- Output nothing outside the JSON object.
 `;
 
   try {
