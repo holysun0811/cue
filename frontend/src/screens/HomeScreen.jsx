@@ -52,7 +52,7 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
 function RecentPracticeCard({ item, onClick }) {
   return (
     <motion.button
-      className="relative flex h-[126px] w-[154px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-white/35 p-3 text-left text-white shadow-[0_6px_14px_rgba(91,92,126,0.1)] transition active:translate-y-0.5"
+      className="relative flex h-[126px] w-[154px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-white/35 p-3 text-left text-white transition active:translate-y-0.5"
       onClick={onClick}
       type="button"
       whileTap={{ scale: 0.97 }}
@@ -167,10 +167,10 @@ export default function HomeScreen({
             </button>
           )}
         </div>
-        <div className="-mr-5 mt-3">
+        <div className="mt-3">
           {recentItems.length > 0 ? (
-            <div className="relative">
-              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-0 pr-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="relative -mr-5">
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-0 pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {recentItems.map((item) => (
                   <RecentPracticeCard item={item} key={item.id} onClick={() => onOpenRecent?.(item)} />
                 ))}

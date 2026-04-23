@@ -46,16 +46,15 @@ export function RecentCoverThumb({ cover }) {
 
   if (payload.type === 'image' && payload.imageUrl) {
     return (
-      <span className="relative flex h-12 w-12 shrink-0 overflow-hidden rounded-[16px] border border-[#F0E4D8]/80 bg-white shadow-[0_8px_16px_rgba(91,92,126,0.07)]">
+      <span className="relative flex h-12 w-12 shrink-0 overflow-hidden rounded-[16px]">
         <img alt={payload.label || ''} className="h-full w-full object-cover" src={payload.imageUrl} />
       </span>
     );
   }
 
   return (
-    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-[#F0E4D8]/80 bg-[#FFF7EE] text-[24px] shadow-[0_8px_16px_rgba(91,92,126,0.07)]">
-      <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/72 via-transparent to-[#FFF1E3]/72" />
-      <span className="relative leading-none">{payload.emoji || FALLBACK_COVER.emoji}</span>
+    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center text-[32px] leading-none">
+      {payload.emoji || FALLBACK_COVER.emoji}
     </span>
   );
 }
