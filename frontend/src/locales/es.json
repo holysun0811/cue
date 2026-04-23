@@ -13,8 +13,9 @@
     "home": "Inicio",
     "settings": "Ajustes",
     "learn": "Learn",
+    "camera": "Camara",
     "bridge": "Recap",
-    "prep": "Crear respuesta",
+    "prep": "Preparacion",
     "practice": "Practica",
     "review": "Revision"
   },
@@ -37,7 +38,59 @@
   },
   "loading": {
     "working": "Procesando...",
-    "preparingSpeak": "Preparando practica..."
+    "preparingSpeak": "Preparando practica...",
+    "preparingExam": "Preparando examen..."
+  },
+  "examSetup": {
+    "stepTitle": "Empezar examen",
+    "close": "Cerrar",
+    "eyebrow": "Examen simulado",
+    "title": "Que quieres practicar?",
+    "subtitle": "Agrega un prompt, tema o material. Cue actuara como examinador e iniciara un examen oral de varios turnos.",
+    "inputTitle": "Empieza con una idea",
+    "inputHint": "Prompt, tema, pregunta o descripcion",
+    "inputPlaceholder": "Di algo o haz una pregunta...",
+    "voiceLabel": "Decir idea",
+    "voiceListening": "Escuchando",
+    "photoTitle": "Agregar foto material",
+    "photoSubtitle": "Toma foto de una tarjeta, hoja o pagina del libro.",
+    "sources": {
+      "prompt": {
+        "title": "Escribir prompt",
+        "description": "Si ya tienes una pregunta."
+      },
+      "topic": {
+        "title": "Decir un tema",
+        "description": "Si solo tienes una idea."
+      },
+      "material": {
+        "title": "Agregar material",
+        "description": "Para fotos, tarjetas o notas."
+      }
+    },
+    "promptPlaceholder": "Pega o escribe un prompt oral",
+    "holdTopic": "Mantener para decir el tema",
+    "releaseTopic": "Soltar para transcribir",
+    "topicExample": "Por ejemplo: \"Quiero practicar una pregunta sobre Dolly the Sheep y su impacto futuro.\"",
+    "topicTranscriptPlaceholder": "Tu tema hablado aparecera aqui. Puedes editarlo antes de empezar.",
+    "materialHelper": "Cue generara preguntas desde el material.",
+    "materialCamera": "Camara",
+    "materialGallery": "Foto",
+    "materialUpload": "Subir",
+    "materialAlt": "Material agregado",
+    "materialReady": "Material agregado",
+    "multiTurnNote": "Las repreguntas multi-turno estan activas.",
+    "startCta": "Empezar examen",
+    "preparing": "Iniciando examen...",
+    "voiceError": "Fallo la voz.",
+    "voiceUnsupported": "Voz no compatible.",
+    "startError": "No se pudo iniciar el examen simulado.",
+    "errors": {
+      "chooseSource": "Elige como quieres dar el contenido del examen.",
+      "addPrompt": "Agrega primero un prompt oral.",
+      "addTopic": "Di o escribe primero un tema.",
+      "addMaterial": "Agrega primero una imagen de material."
+    }
   },
   "hintLevels": {
     "outline": "Esquema",
@@ -59,8 +112,8 @@
     "learnTitle": "Aprender un tema",
     "learnDescription": "Explora una idea, material o personaje antes de hablar.",
     "speakLabel": "Speak",
-    "speakTitle": "Practicar una respuesta",
-    "speakDescription": "Convierte un prompt en plan oral y practicalo.",
+    "speakTitle": "Empezar examen simulado",
+    "speakDescription": "Agrega prompt, tema o material y responde a preguntas del examinador.",
     "cardCta": "Elegir",
     "continueLabel": "Continuar",
     "continueLearnLabel": "Continuar Learn",
@@ -133,6 +186,15 @@
     "addThought": "Agregar",
     "buildBridge": "Crear recap oral"
   },
+  "fakeCamera": {
+    "eyebrow": "Agregar material",
+    "subtitle": "Entrada de camara demo para notas, tarjetas o material impreso.",
+    "previewLabel": "Vista previa",
+    "previewTitle": "Encuadra el material aqui",
+    "previewHint": "La captura de camara esta simulada para la demo hackathon.",
+    "shutter": "Tomar foto",
+    "gallery": "Album"
+  },
   "bridge": {
     "eyebrow": "Recap oral",
     "emptyTitle": "Sin recap",
@@ -153,9 +215,9 @@
   "prep": {
     "eyebrow": "Preparar",
     "title": "Un plan en 3 partes.",
-    "directTitle": "Que vas a responder?",
-    "directSubtitle": "Agrega un prompt o material. Cue crea un plan oral conciso.",
-    "directPlaceholder": "Pega un prompt, escribe tu idea o describe el material.",
+    "directTitle": "Que quieres practicar?",
+    "directSubtitle": "Agrega un prompt, tema o material. Cue iniciara un examen oral simulado.",
+    "directPlaceholder": "Pega o escribe un prompt oral.",
     "voice": "Voz",
     "listening": "Escuchando",
     "voiceError": "Fallo la voz.",
@@ -164,8 +226,8 @@
     "imageAlt": "Prompt subido",
     "imageReady": "Imagen adjunta",
     "preparing": "Preparando...",
-    "prepareCta": "Crear plan oral",
-    "prepareError": "No se pudo preparar.",
+    "prepareCta": "Empezar examen",
+    "prepareError": "No se pudo preparar la practica oral.",
     "promptSummary": "Resumen del prompt",
     "selectedPrompt": "Prompt elegido",
     "fromRecap": "Desde recap",

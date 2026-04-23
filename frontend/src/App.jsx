@@ -14,11 +14,14 @@ import PrepRoom from './screens/PrepRoom.jsx';
 import StageScreen from './screens/StageScreen.jsx';
 import ReviewScreen from './screens/ReviewScreen.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
+import StartExamModal from './screens/StartExamModal.jsx';
+import FakeCameraScreen from './screens/FakeCameraScreen.jsx';
 import GlobalLoadingOverlay from './components/common/GlobalLoadingOverlay.jsx';
 
 function stepFromPath(pathname) {
   if (pathname === '/') return 'home';
   if (pathname === '/settings') return 'settings';
+  if (pathname === '/camera') return 'camera';
   if (pathname === '/learn' || pathname.startsWith('/learn/')) return 'learn';
   if (pathname === '/bridge') return 'bridge';
   if (pathname === '/speak/prep') return 'prep';
@@ -163,6 +166,7 @@ export default function App() {
   const [practiceViewId, setPracticeViewId] = useState(0);
   const [reviewViewId, setReviewViewId] = useState(0);
   const [finishConfirmOpen, setFinishConfirmOpen] = useState(false);
+  const [startExamOpen, setStartExamOpen] = useState(false);
   const practiceEntryAudioRef = useRef(null);
 
   const practiceUserMessageCount = useMemo(
@@ -185,6 +189,11 @@ export default function App() {
   };
 
   const startSpeak = () => {
+    setSpeakError('');
+    setStartExamOpen(true);
+  };
+
+  const continueSpeak = () => {
     navigate('/speak/prep');
   };
 
@@ -319,33 +328,42 @@ export default function App() {
     }
   };
 
-  const prepareDirectSpeak = async (taskInput) => {
+  const createDirectSpeakSession = async (taskInput) => {
+    const analysis = await analyzeInput({
+      taskType: 'answer_prompt',
+      appLanguage: settings.uiLanguage,
+      targetLanguage: settings.targetLanguage,
+      text: taskInput.text,
+      imageBase64: taskInput.imageBase64,
+      audioBase64: taskInput.audioBase64
+    });
+    const response = await prepareSpeak({
+      entryType: 'direct',
+      mode: 'exam',
+      followUpEnabled: true,
+      taskInput: {
+        ...taskInput,
+        text: analysis.promptSummary || taskInput.text
+      },
+      appLanguage: settings.uiLanguage,
+      targetLanguage: settings.targetLanguage
+    });
+
+    return normalizeSpeakSession(response, settings, { originalInput: { entryType: 'direct', taskInput } });
+  };
+
+  const startDirectExam = async (taskInput) => {
     flushSync(() => {
-      setGlobalLoadingKey('loading.preparingSpeak');
+      setGlobalLoadingKey('loading.preparingExam');
       setSpeakBusy(true);
     });
     setSpeakError('');
     try {
-      const analysis = await analyzeInput({
-        taskType: 'answer_prompt',
-        appLanguage: settings.uiLanguage,
-        targetLanguage: settings.targetLanguage,
-        text: taskInput.text,
-        imageBase64: taskInput.imageBase64,
-        audioBase64: taskInput.audioBase64
-      });
-      const response = await prepareSpeak({
-        entryType: 'direct',
-        taskInput: {
-          ...taskInput,
-          text: analysis.promptSummary || taskInput.text
-        },
-        appLanguage: settings.uiLanguage,
-        targetLanguage: settings.targetLanguage
-      });
-      setSession(normalizeSpeakSession(response, settings, { originalInput: { entryType: 'direct', taskInput } }));
+      const nextSession = await createDirectSpeakSession(taskInput);
+      setStartExamOpen(false);
+      enterPractice(nextSession);
     } catch {
-      setSpeakError('prep.prepareError');
+      setSpeakError('examSetup.startError');
     } finally {
       setSpeakBusy(false);
       setGlobalLoadingKey('');
@@ -401,11 +419,11 @@ export default function App() {
     setSession((current) => ({ ...current, ...patch }));
   };
 
-  const primePracticeEntryAudio = () => {
+  const primePracticeEntryAudio = (sourceSession = session) => {
     practiceEntryAudioRef.current?.audio?.pause();
     practiceEntryAudioRef.current = null;
 
-    const examinerMessage = firstExaminerAudioMessage(session);
+    const examinerMessage = firstExaminerAudioMessage(sourceSession);
     if (!examinerMessage?.audioUrl) return;
 
     const audio = new Audio(examinerMessage.audioUrl);
@@ -423,12 +441,14 @@ export default function App() {
     });
   };
 
-  const goPractice = () => {
-    if (!canPractice) return;
-    primePracticeEntryAudio();
+  const enterPractice = (sourceSession = session) => {
+    if (!sourceSession?.sessionId || !sourceSession.speakingPlan?.length) return;
+    primePracticeEntryAudio(sourceSession);
     flushSync(() => {
       setPracticeViewId((current) => current + 1);
-      updateSession({
+      setSession((current) => ({
+        ...current,
+        ...sourceSession,
         round: 1,
         hintLevel: 'phrases',
         hintSupportLevel: 'strong_support',
@@ -436,9 +456,14 @@ export default function App() {
         latestAttempt: null,
         latestReview: null,
         take2Goal: ''
-      });
+      }));
     });
     navigate('/speak/practice');
+  };
+
+  const goPractice = () => {
+    if (!canPractice) return;
+    enterPractice(session);
   };
 
   const goPrepFromReview = () => {
@@ -519,12 +544,14 @@ export default function App() {
               ) : null
             }
             step={step}
+            titleOverride={step === 'prep' && !session.speakingPlan.length ? t('examSetup.stepTitle') : null}
           />
           <AnimatePresence mode="wait">
             {step === 'home' && (
               <HomeScreen
                 key="home"
                 onContinueLearn={continueLearn}
+                onContinueSpeak={continueSpeak}
                 onStartLearn={startLearn}
                 onStartSpeak={startSpeak}
                 learnSession={learnSession}
@@ -533,6 +560,9 @@ export default function App() {
             )}
             {step === 'settings' && (
               <SettingsScreen key="settings" onSettingsChange={setSettings} settings={settings} />
+            )}
+            {step === 'camera' && (
+              <FakeCameraScreen key="camera" />
             )}
             {step === 'learn' && (
               <LearnScreen
@@ -562,10 +592,10 @@ export default function App() {
                 errorKey={speakError}
                 loading={speakBusy}
                 onApproachChange={updateSpeakApproach}
-                onPrepare={prepareDirectSpeak}
                 onPreviewPatch={updateSession}
                 onSessionPatch={updateSession}
                 onStart={goPractice}
+                onStartExam={startDirectExam}
                 session={session}
                 settings={settings}
               />
@@ -584,6 +614,18 @@ export default function App() {
                 onReviewPatch={updateSession}
                 onTakeTwo={takeTwo}
                 session={session}
+              />
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {startExamOpen && (
+              <StartExamModal
+                errorKey={speakError}
+                key="start-exam-modal"
+                loading={speakBusy}
+                onClose={() => setStartExamOpen(false)}
+                onStartExam={startDirectExam}
+                settings={settings}
               />
             )}
           </AnimatePresence>

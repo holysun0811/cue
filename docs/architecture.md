@@ -6,10 +6,11 @@ Short implementation map for new Codex sessions.
 
 - Stack: Vite, React 19, React Router 7, Tailwind CSS, Framer Motion, i18next/react-i18next, lucide-react.
 - Entry: `frontend/src/main.jsx` renders `App` inside the router.
-- App state lives mostly in `frontend/src/App.jsx`: settings, Learn session, Bridge data, Speak session, busy/error flags, and global loading overlay state.
+- App state lives mostly in `frontend/src/App.jsx`: settings, Learn session, Bridge data, Speak session, Start Exam modal state, busy/error flags, and global loading overlay state. The Home primary Speak/Exam entry opens `StartExamModal` over Home; the recent Speak resume button keeps the existing session and navigates to `/speak/prep`.
 - Route-to-step mapping is manual in `App.jsx`:
   - `/` -> Home
   - `/settings` -> Settings
+  - `/camera` -> fake camera/material capture demo page
   - `/learn` and `/learn/:id` -> Learn
   - `/bridge` -> Bridge
   - `/speak/prep` -> Prep
@@ -23,6 +24,7 @@ Short implementation map for new Codex sessions.
 
 - `PhoneFrame`: fixed phone-shell presentation container.
 - `Header`: home/settings/back navigation, with Learn routes returning to home.
+- `StartExamModal`: full-screen modal inside the phone frame; uses Framer Motion bottom-up entry/exit and starts direct exam sessions without route-pushing to Prep.
 - `BottomSheet`: used for Learn recap, persona picker, custom approach, and media picker.
 - `SegmentedControl`: tab-style segmented picker; used in Prep answer approaches. Renders 2, 3, or 4 columns. The default `layoutId="hintLevel"` spring animation can collide if multiple instances mount simultaneously; use distinct `layoutId` props if reused in parallel.
 - `StickyCTA`: fixed bottom CTA pattern used in Prep and Review. Accepts optional `helper` text displayed above the button; Review no longer passes a `helper` (CTA is clean text only).
@@ -58,7 +60,7 @@ Legacy/parallel routes still exist under `/api/ai`, `/api/voice`, `/api/plan`, `
 - Settings expose two languages: App language (`uiLanguage` in React, `appLanguage` in API payloads) and Practice language (`targetLanguage`).
 - App language owns UI/help/explanation data; Practice language owns practice prompts, examiner prompt/TTS, speaking plans, Phrase hint content/highlights, sample answers, subtitles/audio, and imitation answer versions.
 - Speak sessions use both `sessionId` and `speakSessionId`; the frontend normalizes `speakSessionId || sessionId` into `session.sessionId`.
-- Practice sessions also carry IM-ready fields: `canonicalPrompt`, `examinerPromptText`, `examinerPromptAudio`, `hintData`, `initialMessages`, `conversationMessages`, `mode`, and `followUpEnabled`. Message roles support `examiner`, `user`, and `system`; message types support `text` and `audio`.
+- Practice sessions also carry IM-ready fields: `canonicalPrompt`, `examinerPromptText`, `examinerPromptAudio`, `hintData`, `initialMessages`, `conversationMessages`, `mode`, and `followUpEnabled`. `StartExamModal` prepares direct sessions with `mode: "exam"` and `followUpEnabled: true`, then enters Practice immediately. Message roles support `examiner`, `user`, and `system`; message types support `text` and `audio`.
 - A speaking plan is expected to have exactly three items: `opening`, `point_1`, and `point_2_or_conclusion`.
 - `hintData` may contain legacy `outline`, `phrases`, `keywords`, and `scale`, but `StageScreen` currently consumes only `phrases` for the right-side user ghost bubble and `keywords` for inline highlighting. Follow-up hint generation asks for keywords that appear verbatim inside the phrases.
 - `StageScreen` renders the Phrase hint as a right-side user ghost bubble. This ghost bubble is not persisted as a conversation message; it exits before the submitted user audio bubble is inserted. After each submitted user turn, the backend returns an examiner follow-up message that is appended to the real conversation stream.

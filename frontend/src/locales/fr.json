@@ -13,8 +13,9 @@
     "home": "Accueil",
     "settings": "Reglages",
     "learn": "Apprendre",
+    "camera": "Camera",
     "bridge": "Recap",
-    "prep": "Construire",
+    "prep": "Preparation",
     "practice": "Pratique",
     "review": "Bilan"
   },
@@ -37,7 +38,59 @@
   },
   "loading": {
     "working": "Traitement...",
-    "preparingSpeak": "Preparation de la pratique..."
+    "preparingSpeak": "Preparation de la pratique...",
+    "preparingExam": "Preparation de l'examen..."
+  },
+  "examSetup": {
+    "stepTitle": "Commencer l'examen",
+    "close": "Fermer",
+    "eyebrow": "Examen blanc",
+    "title": "Que veux-tu pratiquer ?",
+    "subtitle": "Ajoute un prompt, un sujet ou un document. Cue joue l'examinateur et lance un oral en plusieurs tours.",
+    "inputTitle": "Commence par une idee",
+    "inputHint": "Prompt, sujet, question ou description",
+    "inputPlaceholder": "Dis quelque chose ou pose une question...",
+    "voiceLabel": "Dire l'idee",
+    "voiceListening": "Ecoute",
+    "photoTitle": "Ajouter une photo",
+    "photoSubtitle": "Prends une photo d'une fiche, feuille ou page de manuel.",
+    "sources": {
+      "prompt": {
+        "title": "Taper un prompt",
+        "description": "Si tu as deja une question."
+      },
+      "topic": {
+        "title": "Dire un sujet",
+        "description": "Si tu as juste une idee."
+      },
+      "material": {
+        "title": "Ajouter un document",
+        "description": "Pour photos, cartes ou notes."
+      }
+    },
+    "promptPlaceholder": "Colle ou tape un prompt oral",
+    "holdTopic": "Maintiens pour dire le sujet",
+    "releaseTopic": "Relache pour transcrire",
+    "topicExample": "Par exemple : \"Je veux pratiquer une question sur Dolly the Sheep et son impact futur.\"",
+    "topicTranscriptPlaceholder": "Ton sujet parle apparait ici. Tu peux le corriger avant de commencer.",
+    "materialHelper": "Cue generera des questions a partir du document.",
+    "materialCamera": "Camera",
+    "materialGallery": "Photo",
+    "materialUpload": "Importer",
+    "materialAlt": "Document ajoute",
+    "materialReady": "Document ajoute",
+    "multiTurnNote": "Les relances multi-tours sont activees.",
+    "startCta": "Commencer l'examen",
+    "preparing": "Demarrage de l'examen...",
+    "voiceError": "Echec de la voix.",
+    "voiceUnsupported": "Voix non prise en charge.",
+    "startError": "Impossible de demarrer l'examen blanc.",
+    "errors": {
+      "chooseSource": "Choisis comment fournir le contenu de l'examen.",
+      "addPrompt": "Ajoute d'abord un prompt oral.",
+      "addTopic": "Dis ou tape d'abord un sujet.",
+      "addMaterial": "Ajoute d'abord une image de document."
+    }
   },
   "hintLevels": {
     "outline": "Plan",
@@ -59,8 +112,8 @@
     "learnTitle": "Apprendre un sujet",
     "learnDescription": "Explore une idee, un document ou un personnage avant de parler.",
     "speakLabel": "Speak",
-    "speakTitle": "Pratiquer une reponse",
-    "speakDescription": "Transforme un prompt en plan oral et entraine-toi.",
+    "speakTitle": "Commencer un examen blanc",
+    "speakDescription": "Ajoute un prompt, un sujet ou un document, puis reponds aux relances.",
     "cardCta": "Choisir",
     "continueLabel": "Continuer",
     "continueLearnLabel": "Continuer Learn",
@@ -133,6 +186,15 @@
     "addThought": "Ajouter",
     "buildBridge": "Creer le recap oral"
   },
+  "fakeCamera": {
+    "eyebrow": "Ajouter un document",
+    "subtitle": "Entree camera demo pour notes, cartes de prompt ou documents imprimes.",
+    "previewLabel": "Apercu",
+    "previewTitle": "Cadre le document ici",
+    "previewHint": "La capture camera est simulee pour la demo hackathon.",
+    "shutter": "Prendre photo",
+    "gallery": "Album"
+  },
   "bridge": {
     "eyebrow": "Recap oral",
     "emptyTitle": "Aucun recap",
@@ -153,9 +215,9 @@
   "prep": {
     "eyebrow": "Preparer",
     "title": "Un plan en 3 parties.",
-    "directTitle": "A quoi reponds-tu ?",
-    "directSubtitle": "Ajoute un prompt ou un document. Cue cree un plan oral concis.",
-    "directPlaceholder": "Colle un prompt, tape ton idee ou decris le document.",
+    "directTitle": "Que veux-tu pratiquer ?",
+    "directSubtitle": "Ajoute un prompt, un sujet ou un document. Cue lance un examen oral blanc.",
+    "directPlaceholder": "Colle ou tape un prompt oral.",
     "voice": "Voix",
     "listening": "Ecoute",
     "voiceError": "Echec de la voix.",
@@ -164,8 +226,8 @@
     "imageAlt": "Prompt ajoute",
     "imageReady": "Image attachee",
     "preparing": "Preparation...",
-    "prepareCta": "Creer le plan oral",
-    "prepareError": "Plan impossible.",
+    "prepareCta": "Commencer l'examen",
+    "prepareError": "Preparation de la pratique impossible.",
     "promptSummary": "Resume du prompt",
     "selectedPrompt": "Prompt choisi",
     "fromRecap": "Depuis le recap",

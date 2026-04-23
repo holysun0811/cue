@@ -13,8 +13,9 @@
     "home": "Home",
     "settings": "Settings",
     "learn": "Learn",
+    "camera": "Camera",
     "bridge": "Recap",
-    "prep": "Build Answer",
+    "prep": "Speak Prep",
     "practice": "Practice",
     "review": "Review"
   },
@@ -37,7 +38,59 @@
   },
   "loading": {
     "working": "Working...",
-    "preparingSpeak": "Preparing practice..."
+    "preparingSpeak": "Preparing practice...",
+    "preparingExam": "Preparing exam..."
+  },
+  "examSetup": {
+    "stepTitle": "Start Exam",
+    "close": "Close",
+    "eyebrow": "Mock exam",
+    "title": "What do you want to practice?",
+    "subtitle": "Add a prompt, topic, or material. Cue will act as an examiner and start a multi-turn spoken exam.",
+    "inputTitle": "Start with an idea",
+    "inputHint": "Prompt, topic, question, or material description",
+    "inputPlaceholder": "Say something or ask a question...",
+    "voiceLabel": "Speak idea",
+    "voiceListening": "Listening",
+    "photoTitle": "Add photo material",
+    "photoSubtitle": "Take a photo of a prompt card, worksheet, or textbook page.",
+    "sources": {
+      "prompt": {
+        "title": "Type a prompt",
+        "description": "When you already have a question."
+      },
+      "topic": {
+        "title": "Speak a topic",
+        "description": "When you only have a rough idea."
+      },
+      "material": {
+        "title": "Add material",
+        "description": "For photos, cards, or class notes."
+      }
+    },
+    "promptPlaceholder": "Paste or type a speaking prompt",
+    "holdTopic": "Hold to speak your topic",
+    "releaseTopic": "Release to transcribe",
+    "topicExample": "For example: \"I want to practice a question about Dolly the Sheep and its future impact.\"",
+    "topicTranscriptPlaceholder": "Your spoken topic will appear here. You can edit it before starting.",
+    "materialHelper": "Cue will generate examiner questions from it.",
+    "materialCamera": "Camera",
+    "materialGallery": "Photo",
+    "materialUpload": "Upload",
+    "materialAlt": "Added material",
+    "materialReady": "Material added",
+    "multiTurnNote": "Multi-turn follow-ups are on by default.",
+    "startCta": "Start exam",
+    "preparing": "Starting exam...",
+    "voiceError": "Voice input failed.",
+    "voiceUnsupported": "Voice input is not supported in this browser.",
+    "startError": "Could not start the mock exam.",
+    "errors": {
+      "chooseSource": "Choose how you want to provide the exam content.",
+      "addPrompt": "Add a speaking prompt first.",
+      "addTopic": "Speak or type a topic first.",
+      "addMaterial": "Add a material image first."
+    }
   },
   "taskTypes": {
     "describe_photo": "Describe photo",
@@ -65,8 +118,8 @@
     "learnTitle": "Learn a topic",
     "learnDescription": "Explore an idea, material, or character before you speak.",
     "speakLabel": "Speak",
-    "speakTitle": "Practice an answer",
-    "speakDescription": "Turn a prompt into a speaking plan and rehearse it.",
+    "speakTitle": "Start a mock exam",
+    "speakDescription": "Add a prompt, topic, or material and answer examiner follow-ups.",
     "cardCta": "Select",
     "continueLabel": "Continue",
     "continueLearnLabel": "Continue Learn",
@@ -87,9 +140,9 @@
     "cameraError": "Camera access failed.",
     "voiceError": "Voice input failed.",
     "voiceUnsupported": "Voice input is not supported in this browser.",
-    "buildError": "Could not build your answer. Try again.",
-    "building": "Building...",
-    "cta": "Build my answer"
+    "buildError": "Could not start the mock exam. Try again.",
+    "building": "Starting...",
+    "cta": "Start exam"
   },
   "learn": {
     "eyebrow": "Learn session",
@@ -154,6 +207,15 @@
     "addThought": "Add to session",
     "buildBridge": "Build speaking recap"
   },
+  "fakeCamera": {
+    "eyebrow": "Add material",
+    "subtitle": "Demo camera entry for class notes, prompt cards, or printed material.",
+    "previewLabel": "Preview",
+    "previewTitle": "Frame the material here",
+    "previewHint": "Camera capture is mocked for the hackathon demo.",
+    "shutter": "Take photo",
+    "gallery": "Album"
+  },
   "bridge": {
     "eyebrow": "Speaking recap",
     "emptyTitle": "No recap yet",
@@ -172,11 +234,11 @@
     "practice": "Practice this topic"
   },
   "prep": {
-    "eyebrow": "Build answer",
+    "eyebrow": "Speak prep",
     "title": "A 3-part plan you can say.",
-    "directTitle": "What are you answering?",
-    "directSubtitle": "Add a prompt or material. Cue will turn it into a concise speaking plan.",
-    "directPlaceholder": "Paste a prompt, type your idea, or describe the material.",
+    "directTitle": "What do you want to practice?",
+    "directSubtitle": "Add a prompt, topic, or material. Cue will start a mock oral exam.",
+    "directPlaceholder": "Paste or type a speaking prompt.",
     "voice": "Voice",
     "listening": "Listening",
     "voiceError": "Voice input failed.",
@@ -185,8 +247,8 @@
     "imageAlt": "Uploaded prompt",
     "imageReady": "Image attached",
     "preparing": "Preparing...",
-    "prepareCta": "Build speaking plan",
-    "prepareError": "Could not prepare speaking plan.",
+    "prepareCta": "Start exam",
+    "prepareError": "Could not prepare speaking practice.",
     "promptSummary": "Prompt summary",
     "selectedPrompt": "Selected practice prompt",
     "fromRecap": "From recap",

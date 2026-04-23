@@ -13,8 +13,9 @@
     "home": "Start",
     "settings": "Einstellungen",
     "learn": "Learn",
+    "camera": "Kamera",
     "bridge": "Recap",
-    "prep": "Antwort bauen",
+    "prep": "Vorbereitung",
     "practice": "Uben",
     "review": "Review"
   },
@@ -37,7 +38,59 @@
   },
   "loading": {
     "working": "Verarbeitung...",
-    "preparingSpeak": "Sprechubung wird vorbereitet..."
+    "preparingSpeak": "Sprechubung wird vorbereitet...",
+    "preparingExam": "Prufung wird vorbereitet..."
+  },
+  "examSetup": {
+    "stepTitle": "Prufung starten",
+    "close": "Schliessen",
+    "eyebrow": "Mock Exam",
+    "title": "Was willst du uben?",
+    "subtitle": "Fuge Prompt, Thema oder Material hinzu. Cue spielt den Pruefer und startet eine muendliche Pruefung mit Nachfragen.",
+    "inputTitle": "Mit einer Idee starten",
+    "inputHint": "Prompt, Thema, Frage oder Materialbeschreibung",
+    "inputPlaceholder": "Sag etwas oder stelle eine Frage...",
+    "voiceLabel": "Idee sprechen",
+    "voiceListening": "Hoert zu",
+    "photoTitle": "Fotomaterial hinzufuegen",
+    "photoSubtitle": "Fotografiere eine Karte, ein Arbeitsblatt oder eine Buchseite.",
+    "sources": {
+      "prompt": {
+        "title": "Prompt eingeben",
+        "description": "Wenn du schon eine Frage hast."
+      },
+      "topic": {
+        "title": "Thema sprechen",
+        "description": "Wenn du nur eine Idee hast."
+      },
+      "material": {
+        "title": "Material hinzufugen",
+        "description": "Fur Fotos, Karten oder Notizen."
+      }
+    },
+    "promptPlaceholder": "Sprechprompt einfugen oder tippen",
+    "holdTopic": "Halten und Thema sprechen",
+    "releaseTopic": "Loslassen zum Transkribieren",
+    "topicExample": "Zum Beispiel: \"Ich mochte eine Frage uber Dolly the Sheep und ihre Zukunftsfolgen uben.\"",
+    "topicTranscriptPlaceholder": "Dein gesprochenes Thema erscheint hier. Du kannst es vor dem Start bearbeiten.",
+    "materialHelper": "Cue erzeugt Prueferfragen aus dem Material.",
+    "materialCamera": "Kamera",
+    "materialGallery": "Foto",
+    "materialUpload": "Upload",
+    "materialAlt": "Material hinzugefugt",
+    "materialReady": "Material hinzugefugt",
+    "multiTurnNote": "Mehrstufige Nachfragen sind aktiv.",
+    "startCta": "Prufung starten",
+    "preparing": "Prufung startet...",
+    "voiceError": "Spracheingabe fehlgeschlagen.",
+    "voiceUnsupported": "Spracheingabe nicht unterstutzt.",
+    "startError": "Mock-Prufung konnte nicht starten.",
+    "errors": {
+      "chooseSource": "Wahle, wie du den Prufungsinhalt angeben willst.",
+      "addPrompt": "Fuge zuerst einen Sprechprompt hinzu.",
+      "addTopic": "Sprich oder tippe zuerst ein Thema.",
+      "addMaterial": "Fuge zuerst ein Materialbild hinzu."
+    }
   },
   "hintLevels": {
     "outline": "Plan",
@@ -59,8 +112,8 @@
     "learnTitle": "Ein Thema lernen",
     "learnDescription": "Erkunde eine Idee, ein Material oder eine Figur, bevor du sprichst.",
     "speakLabel": "Speak",
-    "speakTitle": "Eine Antwort uben",
-    "speakDescription": "Mache aus einem Prompt einen Sprechplan und ube ihn.",
+    "speakTitle": "Mock Exam starten",
+    "speakDescription": "Gib Prompt, Thema oder Material an und antworte auf Pruferfragen.",
     "cardCta": "Wahlen",
     "continueLabel": "Fortsetzen",
     "continueLearnLabel": "Learn fortsetzen",
@@ -133,6 +186,15 @@
     "addThought": "Hinzufugen",
     "buildBridge": "Sprech-Recap bauen"
   },
+  "fakeCamera": {
+    "eyebrow": "Material hinzufugen",
+    "subtitle": "Demo-Kameraeingang fur Notizen, Prompt-Karten oder gedrucktes Material.",
+    "previewLabel": "Vorschau",
+    "previewTitle": "Material hier ausrichten",
+    "previewHint": "Kameraaufnahme ist fur die Hackathon-Demo simuliert.",
+    "shutter": "Foto machen",
+    "gallery": "Album"
+  },
   "bridge": {
     "eyebrow": "Sprech-Recap",
     "emptyTitle": "Noch kein Recap",
@@ -151,11 +213,11 @@
     "practice": "Dieses Thema uben"
   },
   "prep": {
-    "eyebrow": "Antwort bauen",
+    "eyebrow": "Vorbereitung",
     "title": "Ein Plan in 3 Teilen.",
-    "directTitle": "Was beantwortest du?",
-    "directSubtitle": "Fuge einen Prompt oder Material hinzu. Cue erstellt einen kurzen Sprechplan.",
-    "directPlaceholder": "Prompt einfugen, Idee tippen oder Material beschreiben.",
+    "directTitle": "Was willst du uben?",
+    "directSubtitle": "Fuge einen Prompt, ein Thema oder Material hinzu. Cue startet eine mundliche Mock-Prufung.",
+    "directPlaceholder": "Sprechprompt einfugen oder tippen.",
     "voice": "Stimme",
     "listening": "Hort zu",
     "voiceError": "Spracheingabe fehlgeschlagen.",
@@ -164,8 +226,8 @@
     "imageAlt": "Prompt hochgeladen",
     "imageReady": "Bild angehangt",
     "preparing": "Bereitet vor...",
-    "prepareCta": "Sprechplan bauen",
-    "prepareError": "Sprechplan fehlgeschlagen.",
+    "prepareCta": "Prufung starten",
+    "prepareError": "Sprechubung konnte nicht vorbereitet werden.",
     "promptSummary": "Prompt-Zusammenfassung",
     "selectedPrompt": "Gewahlter Ubungsprompt",
     "fromRecap": "Aus dem Recap",

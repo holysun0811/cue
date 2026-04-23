@@ -55,7 +55,7 @@ function ModeEntryCard({ accent = 'blue', cta, description, icon: Icon, label, o
   );
 }
 
-export default function HomeScreen({ learnSession, onContinueLearn, onStartLearn, onStartSpeak, session }) {
+export default function HomeScreen({ learnSession, onContinueLearn, onContinueSpeak, onStartLearn, onStartSpeak, session }) {
   const { t } = useTranslation();
   const hasRecentSpeak = Boolean(session?.sessionId);
   const hasRecentLearn = Boolean(learnSession?.learnSessionId);
@@ -112,7 +112,7 @@ export default function HomeScreen({ learnSession, onContinueLearn, onStartLearn
         {hasRecentSpeak && (
           <button
             className="flex w-full items-center justify-between rounded-[22px] border border-white/80 bg-white/64 px-4 py-3 text-left text-sm font-bold text-slate-700 shadow-[0_12px_28px_rgba(91,92,126,0.08)] backdrop-blur-xl"
-            onClick={onStartSpeak}
+            onClick={onContinueSpeak}
             type="button"
           >
             <span>

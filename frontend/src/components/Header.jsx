@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Settings, Sparkles } from 'lucide-react';
 
-export default function Header({ onBack, rightSlot, step }) {
+export default function Header({ onBack, rightSlot, step, titleOverride }) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === '/';
-  const title = isHome ? '' : t(`steps.${step}`);
+  const title = isHome ? '' : titleOverride || t(`steps.${step}`);
   const goBack = () => {
     if (onBack) {
       onBack();

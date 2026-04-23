@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Check, Headphones, ImagePlus, Mic, Sparkles, X } from 'lucide-react';
+import { Camera, Check, FileText, Headphones, ImagePlus, Keyboard, Mic, Sparkles, UploadCloud, X } from 'lucide-react';
 import { previewSampleAnswerAudio } from '../api/client.js';
 import BottomSheet from '../components/common/BottomSheet.jsx';
 import StickyCTA from '../components/common/StickyCTA.jsx';
@@ -369,97 +369,311 @@ function AnswerApproachSelector({ loading, onChange, session }) {
   );
 }
 
-function DirectPromptComposer({ errorKey, loading, onPrepare, settings }) {
+function SourceOptionCard({ description, icon: Icon, onClick, selected, title }) {
+  return (
+    <button
+      className={`grid min-h-[62px] grid-cols-[34px_1fr_22px] items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left transition active:scale-[0.99] ${
+        selected
+          ? 'border-violet-200 bg-white/88 shadow-[0_8px_18px_rgba(99,102,241,0.1)]'
+          : 'border-white/80 bg-white/58 shadow-[0_6px_14px_rgba(91,92,126,0.05)]'
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[14px] ${
+          selected ? 'bg-violet-500 text-white' : 'bg-slate-50 text-slate-500'
+        }`}
+      >
+        <Icon size={16} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[13px] font-black tracking-tight text-slate-950">{title}</span>
+        <span className="mt-0.5 block truncate text-[11px] font-bold text-slate-500">{description}</span>
+      </span>
+      <span
+        className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border ${
+          selected ? 'border-violet-500 bg-violet-500 text-white' : 'border-slate-200 bg-white text-transparent'
+        }`}
+      >
+        <Check size={12} strokeWidth={3} />
+      </span>
+    </button>
+  );
+}
+
+function DirectExamSetup({ errorKey, loading, onStartExam, settings }) {
   const { t } = useTranslation();
-  const [text, setText] = useState('');
+  const [sourceType, setSourceType] = useState('');
+  const [promptText, setPromptText] = useState('');
+  const [topicText, setTopicText] = useState('');
   const [imageBase64, setImageBase64] = useState('');
   const [voiceActive, setVoiceActive] = useState(false);
   const [localError, setLocalError] = useState('');
-  const canPrepare = Boolean(text.trim() || imageBase64);
+  const cameraRef = useRef(null);
+  const galleryRef = useRef(null);
+  const materialRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const currentText = sourceType === 'prompt' ? promptText : sourceType === 'topic' ? topicText : '';
+  const canStartExam = sourceType === 'material' ? Boolean(imageBase64) : Boolean(sourceType && currentText.trim());
+
+  const sourceOptions = [
+    {
+      id: 'prompt',
+      icon: Keyboard,
+      title: t('examSetup.sources.prompt.title'),
+      description: t('examSetup.sources.prompt.description')
+    },
+    {
+      id: 'topic',
+      icon: Mic,
+      title: t('examSetup.sources.topic.title'),
+      description: t('examSetup.sources.topic.description')
+    },
+    {
+      id: 'material',
+      icon: FileText,
+      title: t('examSetup.sources.material.title'),
+      description: t('examSetup.sources.material.description')
+    }
+  ];
 
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setImageBase64(await fileToDataUrl(file));
+    event.target.value = '';
+    setLocalError('');
   };
 
-  const startVoiceInput = () => {
+  const selectSource = (nextSourceType) => {
+    stopTopicSpeech();
+    setSourceType(nextSourceType);
+    setLocalError('');
+  };
+
+  const startTopicSpeech = () => {
+    if (loading || voiceActive) return;
     const recognition = createSpeechRecognition(
       settings.uiLanguage,
-      (spokenText) => setText((current) => [current, spokenText].filter(Boolean).join(' ')),
+      (spokenText) => setTopicText((current) => [current, spokenText].filter(Boolean).join(' ')),
       () => {
         setVoiceActive(false);
-        setLocalError(t('prep.voiceError'));
+        setLocalError(t('examSetup.voiceError'));
       },
       () => setVoiceActive(false)
     );
 
     if (!recognition) {
-      setLocalError(t('prep.voiceUnsupported'));
+      setLocalError(t('examSetup.voiceUnsupported'));
       return;
     }
 
     setLocalError('');
     setVoiceActive(true);
+    recognitionRef.current = recognition;
     recognition.start();
   };
 
-  return (
-    <motion.section className="relative flex min-h-0 flex-1 flex-col px-5 pb-5 pt-5" {...pageTransition}>
-      <div>
-        <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-violet-500">
-          <Sparkles size={13} />
-          {t('prep.eyebrow')}
-        </p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{t('prep.directTitle')}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('prep.directSubtitle')}</p>
-      </div>
+  const stopTopicSpeech = () => {
+    recognitionRef.current?.stop?.();
+    recognitionRef.current = null;
+    setVoiceActive(false);
+  };
 
-      <div className="mt-5 rounded-[26px] border border-white bg-white/82 p-3 shadow-[0_14px_32px_rgba(99,102,241,0.1)] backdrop-blur-xl">
-        <textarea
-          className="h-36 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
-          onChange={(event) => setText(event.target.value)}
-          placeholder={t('prep.directPlaceholder')}
-          value={text}
-        />
-        {imageBase64 && (
-          <div className="mt-2 flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-2">
-            <img alt={t('prep.imageAlt')} className="h-12 w-12 rounded-xl object-cover" src={imageBase64} />
-            <p className="flex-1 text-xs font-black text-sky-600">{t('prep.imageReady')}</p>
-            <button className="text-slate-400" onClick={() => setImageBase64('')} type="button">
-              <X size={16} />
+  const startExam = () => {
+    setLocalError('');
+
+    if (!sourceType) {
+      setLocalError(t('examSetup.errors.chooseSource'));
+      return;
+    }
+
+    if (sourceType === 'material' && !imageBase64) {
+      setLocalError(t('examSetup.errors.addMaterial'));
+      return;
+    }
+
+    if (sourceType !== 'material' && !currentText.trim()) {
+      setLocalError(t(sourceType === 'topic' ? 'examSetup.errors.addTopic' : 'examSetup.errors.addPrompt'));
+      return;
+    }
+
+    onStartExam({
+      text: currentText.trim(),
+      imageBase64,
+      sourceType
+    });
+  };
+
+  const visibleError = localError || (errorKey ? t(errorKey) : '');
+  const renderInputPanel = () => {
+    if (sourceType === 'prompt') {
+      return (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 border-l-2 border-violet-100 pl-3"
+          exit={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: 6 }}
+          key="prompt"
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+        >
+          <textarea
+            className="h-[78px] w-full resize-none rounded-[18px] border border-white/80 bg-white/76 px-3 py-2.5 text-sm leading-relaxed text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.06)] outline-none placeholder:text-slate-400"
+            onChange={(event) => setPromptText(event.target.value)}
+            placeholder={t('examSetup.promptPlaceholder')}
+            value={promptText}
+          />
+        </motion.div>
+      );
+    }
+
+    if (sourceType === 'topic') {
+      return (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 space-y-2 border-l-2 border-violet-100 pl-3"
+          exit={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: 6 }}
+          key="topic"
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+        >
+          <button
+            className={`flex min-h-11 w-full select-none items-center justify-center gap-2 rounded-full border px-4 text-[13px] font-black shadow-[0_8px_18px_rgba(91,92,126,0.06)] transition active:scale-[0.99] ${
+              voiceActive
+                ? 'border-slate-900 bg-slate-950 text-white'
+                : 'border-violet-100 bg-white/80 text-violet-600'
+            }`}
+            onContextMenu={(event) => event.preventDefault()}
+            onPointerCancel={stopTopicSpeech}
+            onPointerDown={(event) => {
+              if (event.button !== 0 && event.pointerType === 'mouse') return;
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+              startTopicSpeech();
+            }}
+            onPointerLeave={(event) => {
+              if (event.buttons) stopTopicSpeech();
+            }}
+            onPointerUp={stopTopicSpeech}
+            type="button"
+          >
+            <Mic size={16} />
+            {voiceActive ? t('examSetup.releaseTopic') : t('examSetup.holdTopic')}
+          </button>
+          <p className="px-1 text-[11px] font-semibold leading-snug text-slate-400">{t('examSetup.topicExample')}</p>
+          <textarea
+            className="h-[62px] w-full resize-none rounded-[16px] border border-white/80 bg-white/70 px-3 py-2 text-sm leading-snug text-slate-800 shadow-[0_8px_18px_rgba(91,92,126,0.05)] outline-none placeholder:text-slate-400"
+            onChange={(event) => setTopicText(event.target.value)}
+            placeholder={t('examSetup.topicTranscriptPlaceholder')}
+            value={topicText}
+          />
+        </motion.div>
+      );
+    }
+
+    if (sourceType === 'material') {
+      return (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 space-y-2 border-l-2 border-violet-100 pl-3"
+          exit={{ opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: 6 }}
+          key="material"
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+        >
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              onClick={() => cameraRef.current?.click()}
+              type="button"
+            >
+              <Camera size={15} />
+              {t('examSetup.materialCamera')}
+            </button>
+            <button
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              onClick={() => galleryRef.current?.click()}
+              type="button"
+            >
+              <ImagePlus size={15} />
+              {t('examSetup.materialGallery')}
+            </button>
+            <button
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[16px] border border-white/80 bg-white/72 px-2 text-[11px] font-black text-slate-700 shadow-[0_6px_14px_rgba(91,92,126,0.05)]"
+              onClick={() => materialRef.current?.click()}
+              type="button"
+            >
+              <UploadCloud size={15} />
+              {t('examSetup.materialUpload')}
             </button>
           </div>
-        )}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-3 text-xs font-black text-slate-700" onClick={startVoiceInput} type="button">
-            <Mic size={15} />
-            {voiceActive ? t('prep.listening') : t('prep.voice')}
-          </button>
-          <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-3 text-xs font-black text-slate-700">
-            <ImagePlus size={15} />
-            {t('prep.image')}
-            <input accept="image/*" className="hidden" onChange={uploadImage} type="file" />
-          </label>
-        </div>
+          <p className="px-1 text-[11px] font-semibold leading-snug text-slate-400">{t('examSetup.materialHelper')}</p>
+          {imageBase64 && (
+            <div className="flex items-center gap-2 rounded-[16px] border border-sky-100 bg-sky-50/78 p-2">
+              <img alt={t('examSetup.materialAlt')} className="h-10 w-10 rounded-xl object-cover" src={imageBase64} />
+              <p className="min-w-0 flex-1 truncate text-[11px] font-black text-sky-600">{t('examSetup.materialReady')}</p>
+              <button className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-400" onClick={() => setImageBase64('')} type="button">
+                <X size={14} />
+              </button>
+            </div>
+          )}
+          <input ref={cameraRef} accept="image/*" capture="environment" className="hidden" onChange={uploadImage} type="file" />
+          <input ref={galleryRef} accept="image/*" className="hidden" onChange={uploadImage} type="file" />
+          <input ref={materialRef} accept="image/*" className="hidden" onChange={uploadImage} type="file" />
+        </motion.div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <motion.section className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-28 pt-4" {...pageTransition}>
+      <div className="pointer-events-none absolute -right-24 top-4 h-56 w-56 rounded-full bg-sky-200/36 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 bottom-20 h-52 w-52 rounded-full bg-rose-100/70 blur-3xl" />
+
+      <div className="relative">
+        <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-violet-500">
+          <Sparkles size={13} />
+          {t('examSetup.eyebrow')}
+        </p>
+        <h2 className="mt-2 max-w-[18rem] text-[1.72rem] font-black leading-tight tracking-tight text-slate-950">{t('examSetup.title')}</h2>
+        <p className="mt-1.5 max-w-[20rem] text-[13px] leading-relaxed text-slate-500">{t('examSetup.subtitle')}</p>
       </div>
 
-      {(localError || errorKey) && <p className="mt-3 text-center text-xs font-bold text-rose-500">{localError || t(errorKey)}</p>}
+      <div className="relative mt-4 min-h-0 flex-1 overflow-y-auto pb-3">
+        <div className="space-y-1.5">
+          {sourceOptions.map((option) => (
+            <SourceOptionCard
+              description={option.description}
+              icon={option.icon}
+              key={option.id}
+              onClick={() => selectSource(option.id)}
+              selected={sourceType === option.id}
+              title={option.title}
+            />
+          ))}
+        </div>
 
-      <motion.button
-        className="mt-auto rounded-[22px] bg-gradient-to-r from-violet-500 to-sky-400 py-4 text-sm font-black text-white shadow-[0_18px_36px_rgba(99,102,241,0.22)] disabled:opacity-40"
-        disabled={loading || !canPrepare}
-        onClick={() => onPrepare({ text, imageBase64 })}
-        type="button"
-        whileTap={{ scale: loading || !canPrepare ? 1 : 0.97 }}
-      >
-        {loading ? t('prep.preparing') : t('prep.prepareCta')}
-      </motion.button>
+        <AnimatePresence mode="wait" initial={false}>
+          {renderInputPanel()}
+        </AnimatePresence>
+
+        <p className="mt-3 px-1 text-center text-[11px] font-semibold leading-snug text-slate-400">
+          {t('examSetup.multiTurnNote')}
+        </p>
+
+        {visibleError && <p className="mt-3 text-center text-xs font-bold text-rose-500">{visibleError}</p>}
+      </div>
+
+      <StickyCTA disabled={loading || !canStartExam} onClick={startExam}>
+        {loading ? t('examSetup.preparing') : t('examSetup.startCta')}
+      </StickyCTA>
     </motion.section>
   );
 }
 
-export default function PrepRoom({ errorKey, loading, onApproachChange, onPrepare, onPreviewPatch, onSessionPatch, onStart, session, settings }) {
+export default function PrepRoom({ errorKey, loading, onApproachChange, onPreviewPatch, onSessionPatch, onStart, onStartExam, session, settings }) {
   const { t } = useTranslation();
   const [preview, setPreview] = useState(null);
   const [previewState, setPreviewState] = useState('idle');
@@ -475,7 +689,7 @@ export default function PrepRoom({ errorKey, loading, onApproachChange, onPrepar
   }, []);
 
   if (!session.speakingPlan.length) {
-    return <DirectPromptComposer errorKey={errorKey} loading={loading} onPrepare={onPrepare} settings={settings} />;
+    return <DirectExamSetup errorKey={errorKey} loading={loading} onStartExam={onStartExam} settings={settings} />;
   }
 
   const playPreview = async () => {
