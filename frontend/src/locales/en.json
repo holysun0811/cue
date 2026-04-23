@@ -111,6 +111,46 @@
     "none": "None"
   },
   "home": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "defaultUserName": "Learner",
+    "oralLabel": "Oral Exam",
+    "oralTitle": "Oral Exam",
+    "oralDescription": "Upload & practise",
+    "exploreLabel": "Explore",
+    "exploreTitle": "Explore",
+    "exploreDescription": "Scan & start a chat",
+    "recentTitle": "Recent Practice",
+    "recentSeeAll": "See all",
+    "recentEmptyTitle": "No practice yet",
+    "recentEmptyBody": "Your recent Oral Exam and Explore sessions will show up here.",
+    "recentOralMode": "Exam",
+    "recentExploreMode": "Explore",
+    "recentTurns": "{{count}} turns",
+    "recentTurnsOne": "1 turn",
+    "recentRound": "Round {{round}}",
+    "recentFallbackOralTitle": "Last speaking practice",
+    "recentFallbackExploreTitle": "Last Explore session",
+    "topicsTitle": "Explore Topics",
+    "topics": {
+      "scienceLab": {
+        "title": "Science Lab",
+        "subtitle": "Genetics & biology"
+      },
+      "historyWalk": {
+        "title": "History Walk",
+        "subtitle": "Renaissance Italy"
+      },
+      "techTalk": {
+        "title": "Tech Talk",
+        "subtitle": "AI & the future"
+      },
+      "artGallery": {
+        "title": "Art Gallery",
+        "subtitle": "Modern movements"
+      }
+    },
     "eyebrow": "Understand first. Speak better.",
     "title": "What do you want to do today?",
     "subtitle": "Explore a topic before you speak, or jump straight into a focused practice round.",
@@ -206,6 +246,15 @@
     "placeholder": "Ask a question, add an opinion, or name what still feels unclear.",
     "addThought": "Add to session",
     "buildBridge": "Build speaking recap"
+  },
+  "topicLoading": {
+    "title": "Preparing your exploration",
+    "subtitle": "Extracting themes, angles, and conversation paths...",
+    "progress": "{{percent}}%",
+    "step1": "Identifying subject matter",
+    "step2": "Finding conversation angles",
+    "step3": "Preparing follow-up questions",
+    "fallbackError": "Could not prepare this topic. Please try again."
   },
   "fakeCamera": {
     "eyebrow": "Add material",

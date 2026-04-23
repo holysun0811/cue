@@ -16,6 +16,7 @@ import ReviewScreen from './screens/ReviewScreen.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
 import StartExamModal from './screens/StartExamModal.jsx';
 import FakeCameraScreen from './screens/FakeCameraScreen.jsx';
+import TopicLoadingScreen from './screens/TopicLoadingScreen.jsx';
 import GlobalLoadingOverlay from './components/common/GlobalLoadingOverlay.jsx';
 
 function stepFromPath(pathname) {
@@ -27,6 +28,7 @@ function stepFromPath(pathname) {
   if (pathname === '/speak/prep') return 'prep';
   if (pathname === '/speak/practice') return 'practice';
   if (pathname === '/speak/review') return 'review';
+  if (pathname === '/explore/topic-loading') return 'topicLoading';
   return 'home';
 }
 
@@ -200,6 +202,48 @@ export default function App() {
   const continueLearn = () => {
     if (!learnSession.learnSessionId) return;
     navigate(`/learn/${learnSession.learnSessionId}`);
+  };
+
+  const startFromTopic = (topic) => {
+    if (!topic) return;
+    navigate('/explore/topic-loading', { state: { topic } });
+  };
+
+  const prepareTopicSession = async (topic) => {
+    if (!topic) return null;
+    setLearnError('');
+    setBridgeData(null);
+    setLearnBusy(true);
+    try {
+      const starterMessage = t('learn.chatStarter');
+      const response = await startLearnSession({
+        topicOrMaterial: topic.seed,
+        persona: { type: 'guide', name: '' },
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage
+      });
+      setLearnSession({
+        learnSessionId: response.learnSessionId,
+        title: response.title,
+        topicOrMaterial: topic.seed,
+        appLanguage: settings.uiLanguage,
+        targetLanguage: settings.targetLanguage,
+        persona: response.persona || { type: 'guide', name: '' },
+        suggestedQuestions: response.suggestedQuestions || [],
+        chatHistory: [
+          { role: 'assistant', content: starterMessage },
+          { role: 'user', content: topic.seed },
+          { role: 'assistant', content: response.openingMessage }
+        ],
+        collectedState: response.collectedState || DEFAULT_LEARN_SESSION.collectedState
+      });
+      return response.learnSessionId;
+    } catch (error) {
+      setLearnError('learn.startError');
+      throw error;
+    } finally {
+      setLearnBusy(false);
+    }
   };
 
   const startLearnFlow = async (input) => {
@@ -554,8 +598,15 @@ export default function App() {
                 onContinueSpeak={continueSpeak}
                 onStartLearn={startLearn}
                 onStartSpeak={startSpeak}
+                onStartTopic={startFromTopic}
                 learnSession={learnSession}
                 session={session}
+              />
+            )}
+            {step === 'topicLoading' && (
+              <TopicLoadingScreen
+                key="topic-loading"
+                onPrepareTopic={prepareTopicSession}
               />
             )}
             {step === 'settings' && (
