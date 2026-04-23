@@ -140,7 +140,11 @@
     "recentRound": "Round {{round}}",
     "recentFallbackOralTitle": "Last speaking practice",
     "recentFallbackExploreTitle": "Last Explore session",
+    "timeNow": "now",
     "topicsTitle": "Explore Topics",
+    "cover": {
+      "imageMaterial": "Image material"
+    },
     "topics": {
       "scienceLab": {
         "title": "Science Lab",
@@ -157,6 +161,10 @@
       "artGallery": {
         "title": "Art Gallery",
         "subtitle": "Artists & ideas"
+      },
+      "customTopic": {
+        "title": "Custom Topic",
+        "subtitle": "Your own exploration"
       }
     },
     "eyebrow": "Understand first. Speak better.",

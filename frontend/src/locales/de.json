@@ -14,6 +14,7 @@
     "settings": "Einstellungen",
     "learn": "Learn",
     "camera": "Kamera",
+    "recentPractice": "Letzte Ubungen",
     "bridge": "Recap",
     "prep": "Vorbereitung",
     "practice": "Uben",
@@ -105,6 +106,16 @@
     "none": "Keine"
   },
   "home": {
+    "greetingMorning": "Guten Morgen",
+    "greetingAfternoon": "Guten Tag",
+    "greetingEvening": "Guten Abend",
+    "defaultUserName": "Lernende Person",
+    "oralLabel": "Mundliche Prufung",
+    "oralTitle": "Mundliche Prufung",
+    "oralDescription": "Hochladen und uben",
+    "exploreLabel": "Erkunden",
+    "exploreTitle": "Erkunden",
+    "exploreDescription": "Scannen und Chat starten",
     "eyebrow": "Erst verstehen. Dann sprechen.",
     "title": "Was mochtest du heute tun?",
     "subtitle": "Erkunde ein Thema vor dem Sprechen oder starte direkt eine fokussierte Ubung.",
@@ -120,6 +131,49 @@
     "continueLearnFallback": "Letzte Learn Session",
     "continueSpeakLabel": "Speak fortsetzen",
     "continueFallback": "Letzte Sprechubung",
+    "recentTitle": "Letzte Ubungen",
+    "recentSeeAll": "Alle ansehen",
+    "recentEmptyTitle": "Noch keine Ubung",
+    "recentEmptyBody": "Deine letzten Erkundungen, Prufungen, Sprechubungen und Learn-Sessions erscheinen hier.",
+    "recentModes": {
+      "exam": "Prufung",
+      "explore": "Erkunden",
+      "learn": "Learn",
+      "oral": "Sprechen",
+      "practice": "Ubung"
+    },
+    "recentTurns": "{{count}} Runden",
+    "recentTurnsOne": "1 Runde",
+    "recentRound": "Runde {{round}}",
+    "recentFallbackOralTitle": "Letzte Sprechubung",
+    "recentFallbackExploreTitle": "Letzte Erkundung",
+    "timeNow": "jetzt",
+    "topicsTitle": "Themen erkunden",
+    "cover": {
+      "imageMaterial": "Bildmaterial"
+    },
+    "topics": {
+      "scienceLab": {
+        "title": "Wissenschaftslabor",
+        "subtitle": "Genetik und Biologie"
+      },
+      "historyWalk": {
+        "title": "Geschichtsrundgang",
+        "subtitle": "Weltereignisse und Zivilisationen"
+      },
+      "techTalk": {
+        "title": "Tech Talk",
+        "subtitle": "KI und Zukunft"
+      },
+      "artGallery": {
+        "title": "Kunstgalerie",
+        "subtitle": "Kunstler und Ideen"
+      },
+      "customTopic": {
+        "title": "Eigenes Thema",
+        "subtitle": "Deine eigene Erkundung"
+      }
+    },
     "languages": "Sprachen",
     "settingsCta": "Einstellungen"
   },

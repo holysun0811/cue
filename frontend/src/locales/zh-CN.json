@@ -112,6 +112,16 @@
     "none": "无"
   },
   "home": {
+    "greetingMorning": "早上好",
+    "greetingAfternoon": "下午好",
+    "greetingEvening": "晚上好",
+    "defaultUserName": "学习者",
+    "oralLabel": "口语考试",
+    "oralTitle": "口语考试",
+    "oralDescription": "上传并练习",
+    "exploreLabel": "探索",
+    "exploreTitle": "探索",
+    "exploreDescription": "扫描并开始对话",
     "eyebrow": "先理解，再说好",
     "title": "今天想做什么？",
     "subtitle": "先探索一个 topic，再整理成能说出口的内容；也可以直接进入口语练习。",
@@ -130,19 +140,46 @@
     "recentTitle": "最近练习",
     "recentSeeAll": "查看全部",
     "recentEmptyTitle": "还没有练习记录",
-    "recentEmptyBody": "Explore、Exam、Oral 和 Learn 的最近 session 会出现在这里。",
+    "recentEmptyBody": "探索、考试、口语和学习的最近记录会出现在这里。",
     "recentModes": {
-      "exam": "Exam",
-      "explore": "Explore",
-      "learn": "Learn",
-      "oral": "Oral",
-      "practice": "Practice"
+      "exam": "考试",
+      "explore": "探索",
+      "learn": "学习",
+      "oral": "口语",
+      "practice": "练习"
     },
     "recentTurns": "{{count}} 轮",
     "recentTurnsOne": "1 轮",
     "recentRound": "第 {{round}} 轮",
     "recentFallbackOralTitle": "上一次口语练习",
-    "recentFallbackExploreTitle": "上一次 Explore session",
+    "recentFallbackExploreTitle": "上一次探索记录",
+    "timeNow": "刚刚",
+    "topicsTitle": "探索主题",
+    "cover": {
+      "imageMaterial": "图片材料"
+    },
+    "topics": {
+      "scienceLab": {
+        "title": "科学实验室",
+        "subtitle": "遗传学与生物学"
+      },
+      "historyWalk": {
+        "title": "历史漫游",
+        "subtitle": "世界事件与文明"
+      },
+      "techTalk": {
+        "title": "科技对话",
+        "subtitle": "AI 与未来"
+      },
+      "artGallery": {
+        "title": "艺术长廊",
+        "subtitle": "艺术家与观念"
+      },
+      "customTopic": {
+        "title": "自定义主题",
+        "subtitle": "你的探索内容"
+      }
+    },
     "languages": "语言设置",
     "settingsCta": "设置",
     "promptPlaceholder": "粘贴题目、输入想法，或拍下老师给的 prompt。",

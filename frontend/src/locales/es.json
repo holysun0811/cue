@@ -14,6 +14,7 @@
     "settings": "Ajustes",
     "learn": "Learn",
     "camera": "Camara",
+    "recentPractice": "Practica reciente",
     "bridge": "Recap",
     "prep": "Preparacion",
     "practice": "Practica",
@@ -105,6 +106,16 @@
     "none": "Ninguno"
   },
   "home": {
+    "greetingMorning": "Buenos dias",
+    "greetingAfternoon": "Buenas tardes",
+    "greetingEvening": "Buenas noches",
+    "defaultUserName": "Estudiante",
+    "oralLabel": "Examen oral",
+    "oralTitle": "Examen oral",
+    "oralDescription": "Sube y practica",
+    "exploreLabel": "Explorar",
+    "exploreTitle": "Explorar",
+    "exploreDescription": "Escanea e inicia chat",
     "eyebrow": "Entiende primero. Habla mejor.",
     "title": "Que quieres hacer hoy?",
     "subtitle": "Explora un tema antes de hablar o entra directo a una practica enfocada.",
@@ -120,6 +131,49 @@
     "continueLearnFallback": "Ultima sesion Learn",
     "continueSpeakLabel": "Continuar Speak",
     "continueFallback": "Ultima practica oral",
+    "recentTitle": "Practica reciente",
+    "recentSeeAll": "Ver todo",
+    "recentEmptyTitle": "Aun no hay practica",
+    "recentEmptyBody": "Tus sesiones recientes de exploracion, examen, oral y aprendizaje apareceran aqui.",
+    "recentModes": {
+      "exam": "Examen",
+      "explore": "Explorar",
+      "learn": "Aprender",
+      "oral": "Oral",
+      "practice": "Practica"
+    },
+    "recentTurns": "{{count}} turnos",
+    "recentTurnsOne": "1 turno",
+    "recentRound": "Ronda {{round}}",
+    "recentFallbackOralTitle": "Ultima practica oral",
+    "recentFallbackExploreTitle": "Ultima exploracion",
+    "timeNow": "ahora",
+    "topicsTitle": "Explorar temas",
+    "cover": {
+      "imageMaterial": "Imagen de material"
+    },
+    "topics": {
+      "scienceLab": {
+        "title": "Laboratorio cientifico",
+        "subtitle": "Genetica y biologia"
+      },
+      "historyWalk": {
+        "title": "Paseo historico",
+        "subtitle": "Eventos mundiales y civilizaciones"
+      },
+      "techTalk": {
+        "title": "Charla tech",
+        "subtitle": "IA y futuro"
+      },
+      "artGallery": {
+        "title": "Galeria de arte",
+        "subtitle": "Artistas e ideas"
+      },
+      "customTopic": {
+        "title": "Tema personalizado",
+        "subtitle": "Tu propia exploracion"
+      }
+    },
     "languages": "Idiomas",
     "settingsCta": "Ajustes"
   },

@@ -22,7 +22,7 @@ export const ORAL_EXAM_COVER = {
   coverVariant: 'oral-exam',
   emoji: '🎙️',
   gradient: 'from-[#FF7C5A] via-[#F25A3A] to-[#E0432A]',
-  label: 'Oral Exam'
+  labelKey: 'home.oralTitle'
 };
 
 export const FILE_MATERIAL_COVER = {
@@ -30,7 +30,7 @@ export const FILE_MATERIAL_COVER = {
   coverVariant: 'material-file',
   emoji: '📄',
   gradient: 'from-[#475569] via-[#64748B] to-[#0F766E]',
-  label: 'Material'
+  labelKey: 'learn.material'
 };
 
 export const EXPLORE_CATEGORY_COVERS = {
@@ -39,35 +39,35 @@ export const EXPLORE_CATEGORY_COVERS = {
     coverVariant: 'science-lab',
     emoji: '🔬',
     gradient: 'from-[#3B82F6] via-[#6366F1] to-[#8B5CF6]',
-    label: 'Science Lab'
+    labelKey: 'home.topics.scienceLab.title'
   },
   history: {
     type: 'category_default',
     coverVariant: 'history-walk',
     emoji: '🏛️',
     gradient: 'from-[#F59E0B] via-[#F97316] to-[#EF4444]',
-    label: 'History Walk'
+    labelKey: 'home.topics.historyWalk.title'
   },
   technology: {
     type: 'category_default',
     coverVariant: 'tech-talk',
     emoji: '🤖',
     gradient: 'from-[#14B8A6] via-[#10B981] to-[#059669]',
-    label: 'Tech Talk'
+    labelKey: 'home.topics.techTalk.title'
   },
   art: {
     type: 'category_default',
     coverVariant: 'art-gallery',
     emoji: '🎨',
     gradient: 'from-[#EC4899] via-[#D946EF] to-[#8B5CF6]',
-    label: 'Art Gallery'
+    labelKey: 'home.topics.artGallery.title'
   },
   custom: {
     type: 'category_default',
     coverVariant: 'custom-topic',
     emoji: '🧭',
     gradient: 'from-[#0F766E] via-[#2563EB] to-[#7C3AED]',
-    label: 'Custom Topic'
+    labelKey: 'home.topics.customTopic.title'
   }
 };
 
@@ -124,7 +124,7 @@ function imageCoverPayload(imageUrl) {
     imageUrl,
     emoji: '🖼️',
     gradient: 'from-[#0F766E] via-[#2563EB] to-[#7C3AED]',
-    label: 'Image material'
+    labelKey: 'home.cover.imageMaterial'
   };
 }
 
@@ -136,7 +136,9 @@ export function buildPresetTopicCoverMetadata(topic = {}, t = (key) => key) {
     sourceType: 'preset_topic',
     presetTopicId: topic.id,
     presetTopicTitle: title,
+    presetTopicTitleKey: topic.titleKey,
     presetTopicSubtitle: subtitle,
+    presetTopicSubtitleKey: topic.subtitleKey,
     presetTopicCoverVariant: topic.id,
     presetTopicIcon: topic.emoji,
     presetTopicGradient: topic.gradient,
@@ -147,8 +149,11 @@ export function buildPresetTopicCoverMetadata(topic = {}, t = (key) => key) {
       emoji: topic.emoji,
       gradient: topic.gradient,
       label: title,
+      labelKey: topic.titleKey,
       title,
-      subtitle
+      titleKey: topic.titleKey,
+      subtitle,
+      subtitleKey: topic.subtitleKey
     }
   };
 }
@@ -211,7 +216,9 @@ export function copyRecentCoverMetadata(source = {}) {
     sourceType: source.sourceType,
     presetTopicId: source.presetTopicId,
     presetTopicTitle: source.presetTopicTitle,
+    presetTopicTitleKey: source.presetTopicTitleKey,
     presetTopicSubtitle: source.presetTopicSubtitle,
+    presetTopicSubtitleKey: source.presetTopicSubtitleKey,
     presetTopicCoverVariant: source.presetTopicCoverVariant,
     presetTopicIcon: source.presetTopicIcon,
     presetTopicGradient: source.presetTopicGradient,
@@ -258,7 +265,7 @@ export function buildLearnHistoryItem(learnSession = {}) {
     id: `learn:${learnSession.learnSessionId}`,
     source: 'learn',
     mode: learnSession.mode || 'explore',
-    title: learnSession.presetTopicTitle || learnSession.title || learnSession.topicOrMaterial || '',
+    title: learnSession.title || learnSession.topicOrMaterial || '',
     emoji: coverMetadata.coverPayload?.emoji || learnSession.emoji || MODE_EMOJI.explore,
     ...coverMetadata,
     createdAt: safeIso(learnSession.createdAt || updatedAt),
@@ -285,7 +292,7 @@ export function buildSpeakHistoryItem(session = {}) {
     id: `speak:${session.sessionId}`,
     source: 'speak',
     mode,
-    title: session.presetTopicTitle || title,
+    title,
     emoji: coverMetadata.coverPayload?.emoji || session.emoji || MODE_EMOJI[mode] || MODE_EMOJI.practice,
     ...coverMetadata,
     createdAt: safeIso(session.createdAt || updatedAt),
@@ -313,12 +320,13 @@ export function upsertPracticeHistory(history = [], item) {
   return sortPracticeHistory(next).slice(0, PRACTICE_HISTORY_LIMIT);
 }
 
-export function formatRelativeTime(value, language = 'en') {
+export function formatRelativeTime(value, { language = 'en', t } = {}) {
   const timestamp = asTimestamp(value);
   if (!timestamp) return '';
 
   const deltaSeconds = Math.round((timestamp - Date.now()) / 1000);
   const absSeconds = Math.abs(deltaSeconds);
+  if (absSeconds < 10 && typeof t === 'function') return t('home.timeNow');
   const divisions = [
     { amount: 60, unit: 'second' },
     { amount: 60, unit: 'minute' },
@@ -351,6 +359,8 @@ function modeLabel(mode, t) {
 }
 
 function titleForItem(item, t) {
+  if (item.presetTopicTitleKey) return t(item.presetTopicTitleKey);
+  if (item.coverPayload?.titleKey && item.coverType === 'preset') return t(item.coverPayload.titleKey);
   if (item.title) return item.title;
   if (item.source === 'learn') return t('home.recentFallbackExploreTitle');
   return t('home.recentFallbackOralTitle');
@@ -375,7 +385,7 @@ function detailForItem(item, t) {
 export function describePracticeHistoryItem(item, { language = 'en', t } = {}) {
   const label = modeLabel(item.mode, t);
   const detail = detailForItem(item, t);
-  const updatedLabel = formatRelativeTime(item.updatedAt, language);
+  const updatedLabel = formatRelativeTime(item.updatedAt, { language, t });
 
   return {
     ...item,

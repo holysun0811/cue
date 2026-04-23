@@ -14,6 +14,7 @@
     "settings": "Reglages",
     "learn": "Apprendre",
     "camera": "Camera",
+    "recentPractice": "Pratiques recentes",
     "bridge": "Recap",
     "prep": "Preparation",
     "practice": "Pratique",
@@ -105,6 +106,16 @@
     "none": "Aucun"
   },
   "home": {
+    "greetingMorning": "Bonjour",
+    "greetingAfternoon": "Bon apres-midi",
+    "greetingEvening": "Bonsoir",
+    "defaultUserName": "Apprenant",
+    "oralLabel": "Examen oral",
+    "oralTitle": "Examen oral",
+    "oralDescription": "Televerse et pratique",
+    "exploreLabel": "Explorer",
+    "exploreTitle": "Explorer",
+    "exploreDescription": "Scanne et lance un chat",
     "eyebrow": "Comprendre, puis parler",
     "title": "Que veux-tu faire aujourd'hui ?",
     "subtitle": "Explore un sujet avant de parler, ou commence directement une pratique ciblee.",
@@ -120,6 +131,49 @@
     "continueLearnFallback": "Derniere session Learn",
     "continueSpeakLabel": "Continuer Speak",
     "continueFallback": "Derniere pratique orale",
+    "recentTitle": "Pratiques recentes",
+    "recentSeeAll": "Tout voir",
+    "recentEmptyTitle": "Aucune pratique",
+    "recentEmptyBody": "Tes sessions recentes d'exploration, d'examen, d'oral et d'apprentissage apparaitront ici.",
+    "recentModes": {
+      "exam": "Examen",
+      "explore": "Explorer",
+      "learn": "Apprendre",
+      "oral": "Oral",
+      "practice": "Pratique"
+    },
+    "recentTurns": "{{count}} tours",
+    "recentTurnsOne": "1 tour",
+    "recentRound": "Tour {{round}}",
+    "recentFallbackOralTitle": "Derniere pratique orale",
+    "recentFallbackExploreTitle": "Derniere exploration",
+    "timeNow": "maintenant",
+    "topicsTitle": "Sujets a explorer",
+    "cover": {
+      "imageMaterial": "Image de document"
+    },
+    "topics": {
+      "scienceLab": {
+        "title": "Laboratoire scientifique",
+        "subtitle": "Genetique et biologie"
+      },
+      "historyWalk": {
+        "title": "Balade historique",
+        "subtitle": "Evenements mondiaux et civilisations"
+      },
+      "techTalk": {
+        "title": "Discussion tech",
+        "subtitle": "IA et avenir"
+      },
+      "artGallery": {
+        "title": "Galerie d'art",
+        "subtitle": "Artistes et idees"
+      },
+      "customTopic": {
+        "title": "Sujet personnalise",
+        "subtitle": "Ta propre exploration"
+      }
+    },
     "languages": "Langues",
     "settingsCta": "Reglages"
   },
