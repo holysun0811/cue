@@ -13,8 +13,9 @@
     "home": "首页",
     "settings": "设置",
     "learn": "学习",
+    "camera": "拍照",
     "bridge": "口语整理",
-    "prep": "搭建答案",
+    "prep": "口语准备",
     "practice": "练习",
     "review": "复盘"
   },
@@ -37,7 +38,59 @@
   },
   "loading": {
     "working": "处理中...",
-    "preparingSpeak": "正在准备口语练习..."
+    "preparingSpeak": "正在准备口语练习...",
+    "preparingExam": "正在准备模拟考试..."
+  },
+  "examSetup": {
+    "stepTitle": "开始模拟考试",
+    "close": "关闭",
+    "eyebrow": "模拟口试",
+    "title": "你想考什么？",
+    "subtitle": "输入题目、主题或材料，Cue 会扮演考官，和你进行多轮口语问答。",
+    "inputTitle": "写想法",
+    "inputHint": "题目、topic、问题或材料描述",
+    "inputPlaceholder": "说点什么，或写一个问题...",
+    "voiceLabel": "语音输入",
+    "voiceListening": "听取中",
+    "photoTitle": "拍照输入材料",
+    "photoSubtitle": "拍下题卡、练习纸或课本页面。",
+    "sources": {
+      "prompt": {
+        "title": "输入题目",
+        "description": "已经有明确题目时使用。"
+      },
+      "topic": {
+        "title": "说出主题",
+        "description": "只有 topic 或想法时使用。"
+      },
+      "material": {
+        "title": "上传材料",
+        "description": "适合图片、题卡或课堂材料。"
+      }
+    },
+    "promptPlaceholder": "请输入一个口语题目",
+    "holdTopic": "按住说出主题",
+    "releaseTopic": "松开后转写",
+    "topicExample": "比如“我想模拟一个关于 Dolly the Sheep 未来影响的口语题”。",
+    "topicTranscriptPlaceholder": "语音识别结果会出现在这里，开始前可以修改。",
+    "materialHelper": "Cue 会基于材料生成考官提问。",
+    "materialCamera": "拍照",
+    "materialGallery": "选图",
+    "materialUpload": "上传",
+    "materialAlt": "已添加材料",
+    "materialReady": "材料已添加",
+    "multiTurnNote": "默认开启多轮追问。",
+    "startCta": "开始模拟考试",
+    "preparing": "正在开始考试...",
+    "voiceError": "语音输入失败。",
+    "voiceUnsupported": "当前浏览器不支持语音输入。",
+    "startError": "无法开始模拟考试。",
+    "errors": {
+      "chooseSource": "先选择一种提供考试内容的方式。",
+      "addPrompt": "请先输入一个口语题目。",
+      "addTopic": "请先说出或输入一个主题。",
+      "addMaterial": "请先添加一张材料图片。"
+    }
   },
   "taskTypes": {
     "describe_photo": "描述图片",
@@ -65,8 +118,8 @@
     "learnTitle": "学习一个 topic",
     "learnDescription": "先理解一个想法、材料或人物，再进入表达。",
     "speakLabel": "Speak",
-    "speakTitle": "练习一个回答",
-    "speakDescription": "把题目变成口语计划，然后开口练一轮。",
+    "speakTitle": "开始模拟考试",
+    "speakDescription": "输入题目、主题或材料，然后回答考官的多轮追问。",
     "cardCta": "进入",
     "continueLabel": "继续",
     "continueLearnLabel": "继续 Learn",
@@ -87,9 +140,9 @@
     "cameraError": "无法访问相机。",
     "voiceError": "语音输入失败。",
     "voiceUnsupported": "当前浏览器不支持语音输入。",
-    "buildError": "无法生成答案，请再试一次。",
-    "building": "生成中...",
-    "cta": "帮我搭答案"
+    "buildError": "无法开始模拟考试，请再试一次。",
+    "building": "启动中...",
+    "cta": "开始模拟考试"
   },
   "learn": {
     "eyebrow": "Learn session",
@@ -154,6 +207,15 @@
     "addThought": "加入本次学习",
     "buildBridge": "生成口语整理"
   },
+  "fakeCamera": {
+    "eyebrow": "添加材料",
+    "subtitle": "Hackathon demo 用的拍照入口，可表示课堂材料、题卡或打印内容。",
+    "previewLabel": "取景",
+    "previewTitle": "把材料放在这里",
+    "previewHint": "当前版本不调用真实摄像头，仅用于演示流程。",
+    "shutter": "拍照",
+    "gallery": "相册"
+  },
   "bridge": {
     "eyebrow": "口语整理",
     "emptyTitle": "还没有整理内容",
@@ -172,11 +234,11 @@
     "practice": "练这个 topic"
   },
   "prep": {
-    "eyebrow": "搭建答案",
+    "eyebrow": "口语准备",
     "title": "三步就能开口。",
-    "directTitle": "你要回答什么？",
-    "directSubtitle": "放入题目或材料，Cue 会把它变成简洁的口语计划。",
-    "directPlaceholder": "粘贴题目、输入想法，或描述材料内容。",
+    "directTitle": "你想考什么？",
+    "directSubtitle": "输入题目、主题或材料，Cue 会开始一场模拟口试。",
+    "directPlaceholder": "请输入一个口语题目。",
     "voice": "语音",
     "listening": "听取中",
     "voiceError": "语音输入失败。",
@@ -185,8 +247,8 @@
     "imageAlt": "上传的题目",
     "imageReady": "图片已添加",
     "preparing": "准备中...",
-    "prepareCta": "生成口语计划",
-    "prepareError": "无法生成口语计划。",
+    "prepareCta": "开始模拟考试",
+    "prepareError": "无法准备口语练习。",
     "promptSummary": "题目摘要",
     "selectedPrompt": "你选择的练习题",
     "fromRecap": "来自口语整理",

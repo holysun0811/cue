@@ -20,6 +20,8 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Practice does not auto-enter Review after a user answer. Review starts only when the learner taps "Finish practice" after sending at least one answer.
 - Phrase hint content and highlighted key terms use Practice language.
 - Review shows loading skeletons while generating, surfaces the single most important fix prominently, and only renders the CTA after review data is ready.
+- Direct Speak/Exam entry is a full-screen Start Exam creation modal, not a Build Answer or answer-plan generator. The learner enters a text/voice seed or opens the photo-material demo route, then starts a multi-turn examiner IM exam directly.
+- Multi-turn examiner follow-up is the default Exam behavior and should not be exposed as a one-round/multi-round setting.
 
 ## Recent Changes
 
@@ -53,6 +55,14 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - New locale keys added: `loadingTitle`, `loadingHint`, `topFixLabel`, `otherNotes` across all 5 locales.
 - Review generation now receives the full Practice `conversationMessages` and an aggregate transcript of all user turns. The backend also falls back to stored session conversation history if the request omits messages.
 
+### Direct Exam setup
+- Replaced the direct-entry Start Exam route-like setup with a full-screen creation modal over Home.
+- The modal uses a content-creation layout: left close button, centered Start Exam title, top-right Start exam action, a large white idea/input card, a card-level voice button, and a bottom photo-material entry card.
+- Text and voice input both write into the same large input card. Start exam stays disabled until that card has a useful seed.
+- The Start exam action calls `/api/input/analyze` and `/api/speak/prepare` with direct entry, `mode: "exam"`, and `followUpEnabled: true`, then immediately enters the examiner IM Practice page.
+- Home's primary Speak/Exam card opens this modal, while the recent Speak button resumes the previous in-memory Speak session.
+- The bottom photo-material card is currently a Hackathon demo stub: it closes the modal and navigates to `/camera`, a fake camera page with mock preview, shutter, and album controls.
+
 ### STT Service (bug fix)
 - `stt.service.js` now normalises `languageCode` via `toTtsLanguageCode()` before calling Google STT. Fixes `INVALID_ARGUMENT` errors caused by short codes like `en` or `zh-CN` being passed directly to the API.
 - Model selection is now automatic: `latest_long` for `en-*`, `default` for all other languages. Fixes failures when practising in non-English languages (e.g. Chinese).
@@ -60,6 +70,7 @@ Short operational notes for the next Codex session. Keep this updated after larg
 ## Recent Repository State
 
 - Frontend has screens for Home, Learn, Bridge, Prep, Practice, Review, and Settings.
+- The direct empty state under Prep is now a Start Exam setup screen; prepared/resumed sessions still use the existing speaking-plan Prep view.
 - Frontend has common components for bottom sheets, sticky CTA, audio playback, segmented controls, and global loading.
 - Backend is split into route/controller/service layers for input, learn, bridge, speak, audio, review, and older AI/voice/plan/practice/session routes.
 - Gemini service owns structured generation; normalises all `recommendedApproaches` and `allApproachPlans` IDs to `approach_1/2/3` by position index before returning to controller.
@@ -82,6 +93,8 @@ Short operational notes for the next Codex session. Keep this updated after larg
 - Do not turn Practice back into the old static prompt card; the examiner chat shell is now the intended direction.
 - Do not put hints into `conversationMessages`; the user-side ghost bubble is UI state, not a real conversation turn.
 - Do not make the Review CTA visible during loading; it must only appear after review data is present.
+- Do not turn the direct Exam setup back into a Build Answer / Build speaking plan form; the direct entry should create an exam prompt and immediately start the examiner IM conversation.
+- Do not add a one-round/multi-round setup control; direct Exam defaults to multi-turn examiner follow-up.
 
 ## Known Issues And Constraints
 

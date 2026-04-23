@@ -1,14 +1,29 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Settings, Sparkles } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
-export default function Header({ onBack, rightSlot, step }) {
+function greetingKey() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'home.greetingMorning';
+  if (hour < 18) return 'home.greetingAfternoon';
+  return 'home.greetingEvening';
+}
+
+function resolveUserName(t) {
+  const saved = typeof window !== 'undefined' ? window.localStorage.getItem('cue-user-name') : '';
+  return saved || t('home.defaultUserName');
+}
+
+export default function Header({ onBack, rightSlot, step, titleOverride }) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === '/';
-  const title = isHome ? '' : t(`steps.${step}`);
+  const isTopicLoading = location.pathname === '/explore/topic-loading';
+  const title = isHome ? '' : titleOverride || t(`steps.${step}`);
+  const userName = resolveUserName(t);
+  const userInitial = (userName || '?').trim().charAt(0).toUpperCase() || '?';
   const goBack = () => {
     if (onBack) {
       onBack();
@@ -21,42 +36,42 @@ export default function Header({ onBack, rightSlot, step }) {
     navigate(-1);
   };
 
+  if (isTopicLoading) {
+    return <header className="relative z-20 h-[56px] shrink-0 bg-transparent pt-[48px]" />;
+  }
+
   return (
     <header
-      className={`relative z-20 grid h-[104px] shrink-0 items-center gap-2 bg-transparent px-5 pb-0 pt-[48px] ${
-        isHome ? 'grid-cols-[1fr_auto]' : 'grid-cols-[76px_1fr_76px]'
+      className={`relative z-20 grid shrink-0 items-center gap-2 bg-transparent px-5 pb-0 pt-[48px] ${
+        isHome ? 'h-[112px] grid-cols-[1fr_auto]' : 'h-[104px] grid-cols-[76px_1fr_76px]'
       }`}
     >
       {isHome ? (
         <>
           <motion.div
-            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-            className="flex min-w-0 items-center gap-3"
-            initial={{ opacity: 0, x: -12, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            className="min-w-0"
+            initial={{ opacity: 0, y: -6, filter: 'blur(6px)' }}
             key="home-header"
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            transition={{ duration: 0.24, ease: 'easeOut' }}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-sky-400 text-sm font-black tracking-tight text-white shadow-[0_12px_24px_rgba(99,102,241,0.22)]">
-              C
+            <span className="flex items-center gap-1 text-[13px] font-semibold text-slate-500">
+              {t(greetingKey())}
+              <span aria-hidden="true">👋</span>
             </span>
-            <span className="min-w-0">
-              <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.2em] text-violet-500">
-                <Sparkles size={11} />
-                CUE
-              </span>
-              <span className="block truncate text-[15px] font-black leading-tight tracking-tight text-slate-900">{t('brand.name')}</span>
+            <span className="mt-0.5 block truncate text-[26px] font-black leading-tight tracking-tight text-slate-950">
+              {userName}
             </span>
           </motion.div>
           <div className="flex justify-end">
             <motion.button
               aria-label={t('nav.settings')}
-              className="flex items-center gap-1.5 rounded-full border border-white/80 bg-white/72 px-3 py-2 text-xs font-black text-slate-700 shadow-[0_10px_22px_rgba(91,92,126,0.1)] backdrop-blur-xl transition hover:border-violet-200 hover:text-violet-600"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#FF8A5B] to-[#EF4C2F] text-[15px] font-black text-white shadow-[0_12px_24px_rgba(239,76,47,0.3)] transition active:scale-95"
               onClick={() => navigate('/settings')}
               type="button"
               whileTap={{ scale: 0.94 }}
             >
-              <Settings size={14} />
-              <span>{t('nav.settings')}</span>
+              {userInitial}
             </motion.button>
           </div>
         </>

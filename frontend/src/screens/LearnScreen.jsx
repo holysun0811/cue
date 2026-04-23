@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { BookOpenText, Camera, Check, ChevronRight, ImagePlus, MessageCircle, Mic, Send, Sparkles, X } from 'lucide-react';
-import BottomSheet from '../components/common/BottomSheet.jsx';
+import { BookOpenText, Camera, Check, ChevronRight, MessageCircle, Mic, Send, Sparkles, X } from 'lucide-react';
 import { fileToDataUrl, createSpeechRecognition } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
 import { targetLanguagePrompts } from '../lib/practicePrompts.js';
+import BottomSheet from '../components/common/BottomSheet.jsx';
 
 const clamp = (value, min = 0, max = 1) => Math.min(Math.max(value, min), max);
 
@@ -275,11 +275,9 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState('');
   const [imageBase64, setImageBase64] = useState('');
-  const [mediaOpen, setMediaOpen] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const [localError, setLocalError] = useState('');
   const cameraRef = useRef(null);
-  const galleryRef = useRef(null);
   const longPressRef = useRef(null);
 
   const attachImage = async (event) => {
@@ -287,7 +285,6 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
     if (!file) return;
     setImageBase64(await fileToDataUrl(file));
     event.target.value = '';
-    setMediaOpen(false);
   };
 
   const startVoiceInput = () => {
@@ -377,7 +374,7 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
           <button
             aria-label={t('learn.camera')}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border border-sky-100 bg-sky-50 text-sky-600 shadow-[0_8px_18px_rgba(14,165,233,0.08)]"
-            onClick={() => setMediaOpen(true)}
+            onClick={() => cameraRef.current?.click()}
             type="button"
           >
             <Camera size={18} />
@@ -396,43 +393,8 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
       </div>
 
       <input ref={cameraRef} accept="image/*" capture="environment" className="hidden" onChange={attachImage} type="file" />
-      <input ref={galleryRef} accept="image/*" className="hidden" onChange={attachImage} type="file" />
       {(localError || errorKey) && <p className="mt-2 text-xs font-bold text-rose-500">{localError || t(errorKey)}</p>}
       {voiceActive && <p className="mt-2 text-center text-xs font-black text-violet-500">{t('learn.listening')}</p>}
-
-      <BottomSheet onClose={() => setMediaOpen(false)} open={mediaOpen} title={t('learn.materialSheetTitle')}>
-        <div className="space-y-3">
-          <div className="overflow-hidden rounded-[24px] border border-slate-100 bg-slate-50">
-            <button
-              className="flex min-h-[62px] w-full items-center gap-3 border-b border-slate-100 bg-white px-4 text-left text-sm font-black text-slate-800"
-              onClick={() => cameraRef.current?.click()}
-              type="button"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-white">
-                <Camera size={18} />
-              </span>
-              {t('learn.camera')}
-            </button>
-            <button
-              className="flex min-h-[62px] w-full items-center gap-3 bg-white px-4 text-left text-sm font-black text-slate-800"
-              onClick={() => galleryRef.current?.click()}
-              type="button"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-600">
-                <ImagePlus size={18} />
-              </span>
-              {t('learn.gallery')}
-            </button>
-          </div>
-          <button
-            className="flex min-h-[54px] w-full items-center justify-center rounded-[22px] border border-slate-100 bg-white text-sm font-black text-slate-500"
-            onClick={() => setMediaOpen(false)}
-            type="button"
-          >
-            {t('learn.cancel')}
-          </button>
-        </div>
-      </BottomSheet>
     </div>
   );
 }
