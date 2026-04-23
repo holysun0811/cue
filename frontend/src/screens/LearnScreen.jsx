@@ -374,18 +374,41 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
           >
             <Mic size={15} />
           </button>
-          <textarea
-            className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent px-1 text-sm leading-snug text-slate-800 outline-none ${uiTheme.input.placeholder} ${
-              firstTopic ? 'h-6 whitespace-nowrap py-0 text-[15px] leading-6' : 'max-h-20 min-h-8 py-1.5'
-            }`}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              if (!imageBase64) setInputSourceType('text_input');
-            }}
-            placeholder={firstTopic ? t('learn.firstTopicPlaceholder') : t('learn.chatPlaceholder')}
-            rows={1}
-            value={draft}
-          />
+          {firstTopic ? (
+            <input
+              className={`min-w-0 flex-1 bg-transparent px-1 text-[15px] text-slate-800 outline-none ${uiTheme.input.placeholder}`}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                if (!imageBase64) setInputSourceType('text_input');
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={t('learn.firstTopicPlaceholder')}
+              type="text"
+              value={draft}
+            />
+          ) : (
+            <textarea
+              className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent px-1 py-1.5 text-sm leading-snug text-slate-800 outline-none max-h-20 min-h-8 ${uiTheme.input.placeholder}`}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                if (!imageBase64) setInputSourceType('text_input');
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={t('learn.chatPlaceholder')}
+              rows={1}
+              value={draft}
+            />
+          )}
         </div>
         {firstTopic && (
           <button
