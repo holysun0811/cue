@@ -272,6 +272,7 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState('');
   const [imageBase64, setImageBase64] = useState('');
+  const [inputSourceType, setInputSourceType] = useState('text_input');
   const [voiceActive, setVoiceActive] = useState(false);
   const [localError, setLocalError] = useState('');
   const cameraRef = useRef(null);
@@ -281,6 +282,7 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
     const file = event.target.files?.[0];
     if (!file) return;
     setImageBase64(await fileToDataUrl(file));
+    setInputSourceType('image_material');
     event.target.value = '';
   };
 
@@ -288,7 +290,10 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
     if (busy) return;
     const recognition = createSpeechRecognition(
       settings.uiLanguage,
-      (spokenText) => setDraft((current) => [current, spokenText].filter(Boolean).join(' ')),
+      (spokenText) => {
+        setInputSourceType('voice_input');
+        setDraft((current) => [current, spokenText].filter(Boolean).join(' '));
+      },
       () => {
         setVoiceActive(false);
         setLocalError(t('learn.voiceError'));
@@ -319,9 +324,14 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
   const send = () => {
     const message = draft.trim();
     if ((!message && !imageBase64) || busy) return;
-    onSubmit({ message, imageBase64 });
+    onSubmit({
+      message,
+      imageBase64,
+      sourceType: imageBase64 ? 'image_material' : inputSourceType
+    });
     setDraft('');
     setImageBase64('');
+    setInputSourceType('text_input');
   };
 
   return (
@@ -330,7 +340,14 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
         <div className={`mb-2 flex items-center gap-3 rounded-2xl p-2 ${uiTheme.selectable.selected}`}>
           <img alt={t('learn.materialAlt')} className="h-12 w-12 rounded-2xl object-cover" src={imageBase64} />
           <p className={`min-w-0 flex-1 text-xs font-black ${uiTheme.accent.text}`}>{t('learn.materialReady')}</p>
-          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400" onClick={() => setImageBase64('')} type="button">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-400"
+            onClick={() => {
+              setImageBase64('');
+              setInputSourceType('text_input');
+            }}
+            type="button"
+          >
             <X size={16} />
           </button>
         </div>
@@ -361,7 +378,10 @@ function LearnChatComposer({ busy, errorKey, firstTopic, onSubmit, settings }) {
             className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent px-1 text-sm leading-snug text-slate-800 outline-none ${uiTheme.input.placeholder} ${
               firstTopic ? 'h-6 whitespace-nowrap py-0 text-[15px] leading-6' : 'max-h-20 min-h-8 py-1.5'
             }`}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              if (!imageBase64) setInputSourceType('text_input');
+            }}
             placeholder={firstTopic ? t('learn.firstTopicPlaceholder') : t('learn.chatPlaceholder')}
             rows={1}
             value={draft}

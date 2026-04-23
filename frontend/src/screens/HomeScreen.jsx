@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight, ScanLine, ScrollText } from 'lucide-react';
 import { pageTransition, springPop, staggerContainer } from '../lib/motion.js';
 import { PRESET_TOPICS } from '../lib/homeTopics.js';
+import { RecentCoverBackdrop } from '../components/RecentCover.jsx';
 
 function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, title }) {
   const styles =
@@ -48,47 +49,24 @@ function PrimaryEntryCard({ accent, description, icon: Icon, label, onClick, tit
   );
 }
 
-function resolveRecentItems({ learnSession, session, t }) {
-  const items = [];
-  if (session?.sessionId) {
-    const userTurns = (session.conversationMessages || []).filter((message) => message.role === 'user').length;
-    const title = session.promptSummary || session.canonicalPrompt || t('home.recentFallbackOralTitle');
-    const meta = userTurns
-      ? `${t('home.recentOralMode')} · ${userTurns === 1 ? t('home.recentTurnsOne') : t('home.recentTurns', { count: userTurns })}`
-      : `${t('home.recentOralMode')} · ${t('home.recentRound', { round: session.round || 1 })}`;
-    items.push({
-      id: `oral-${session.sessionId}`,
-      kind: 'oral',
-      title,
-      meta,
-      emoji: '🎙️'
-    });
-  }
-  if (learnSession?.learnSessionId) {
-    const turns = (learnSession.chatHistory || []).filter((message) => message.role === 'user').length;
-    items.push({
-      id: `explore-${learnSession.learnSessionId}`,
-      kind: 'explore',
-      title: learnSession.title || t('home.recentFallbackExploreTitle'),
-      meta: `${t('home.recentExploreMode')} · ${turns === 1 ? t('home.recentTurnsOne') : t('home.recentTurns', { count: turns })}`,
-      emoji: '🌍'
-    });
-  }
-  return items;
-}
-
 function RecentPracticeCard({ item, onClick }) {
   return (
     <motion.button
-      className="flex h-[122px] w-[156px] shrink-0 flex-col justify-between overflow-hidden rounded-[22px] border border-white/80 bg-white/88 p-3 text-left shadow-[0_12px_26px_rgba(91,92,126,0.08)] backdrop-blur-xl transition active:translate-y-0.5"
+      className="relative flex h-[126px] w-[154px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[22px] border border-white/35 p-3 text-left text-white shadow-[0_14px_28px_rgba(91,92,126,0.14)] transition active:translate-y-0.5"
       onClick={onClick}
       type="button"
       whileTap={{ scale: 0.97 }}
     >
-      <span className="text-[28px] leading-none">{item.emoji}</span>
-      <div className="min-w-0">
-        <h4 className="line-clamp-2 text-[14px] font-black leading-tight tracking-tight text-slate-900">{item.title}</h4>
-        <p className="mt-1 truncate text-[11px] font-bold text-slate-400">{item.meta}</p>
+      <RecentCoverBackdrop cover={item.coverPayload} />
+      <span className="relative flex items-start justify-between gap-2">
+        <span className="text-[28px] leading-none">{item.emoji}</span>
+        <span className="max-w-[76px] truncate rounded-full bg-white/24 px-2 py-1 text-[10px] font-black text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-md">
+          {item.modeLabel}
+        </span>
+      </span>
+      <div className="relative min-w-0">
+        <h4 className="line-clamp-2 text-[14px] font-black leading-tight tracking-tight text-white drop-shadow-[0_1px_6px_rgba(15,23,42,0.18)]">{item.title}</h4>
+        <p className="mt-1 truncate text-[11px] font-bold text-white/82">{item.secondaryMeta}</p>
       </div>
     </motion.button>
   );
@@ -134,21 +112,14 @@ function TopicCard({ onClick, topic }) {
 }
 
 export default function HomeScreen({
-  learnSession,
-  onContinueLearn,
-  onContinueSpeak,
+  onOpenRecent,
+  onOpenRecentAll,
   onStartLearn,
   onStartSpeak,
   onStartTopic,
-  session
+  recentItems = []
 }) {
   const { t } = useTranslation();
-  const recentItems = resolveRecentItems({ learnSession, session, t });
-
-  const openRecent = (item) => {
-    if (item.kind === 'oral') onContinueSpeak?.();
-    else if (item.kind === 'explore') onContinueLearn?.();
-  };
 
   return (
     <motion.section
@@ -189,7 +160,7 @@ export default function HomeScreen({
           {recentItems.length > 0 && (
             <button
               className="flex items-center gap-0.5 text-[13px] font-black text-[#F46A1F] transition active:translate-y-0.5"
-              onClick={recentItems[0] ? () => openRecent(recentItems[0]) : undefined}
+              onClick={onOpenRecentAll}
               type="button"
             >
               {t('home.recentSeeAll')}
@@ -199,10 +170,13 @@ export default function HomeScreen({
         </div>
         <div className="-mx-5 mt-3">
           {recentItems.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {recentItems.map((item) => (
-                <RecentPracticeCard item={item} key={item.id} onClick={() => openRecent(item)} />
-              ))}
+            <div className="relative">
+              <div className="flex snap-x gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {recentItems.map((item) => (
+                  <RecentPracticeCard item={item} key={item.id} onClick={() => onOpenRecent?.(item)} />
+                ))}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-9 bg-gradient-to-l from-[#FFF7EE] to-transparent" />
             </div>
           ) : (
             <div className="px-5">

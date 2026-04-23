@@ -14,6 +14,7 @@
     "settings": "Settings",
     "learn": "Learn",
     "camera": "Camera",
+    "recentPractice": "Recent Practice",
     "bridge": "Recap",
     "prep": "Speak Prep",
     "practice": "Practice",
@@ -124,7 +125,14 @@
     "recentTitle": "Recent Practice",
     "recentSeeAll": "See all",
     "recentEmptyTitle": "No practice yet",
-    "recentEmptyBody": "Your recent Oral Exam and Explore sessions will show up here.",
+    "recentEmptyBody": "Your recent Explore, Exam, Oral, and Learn sessions will show up here.",
+    "recentModes": {
+      "exam": "Exam",
+      "explore": "Explore",
+      "learn": "Learn",
+      "oral": "Oral",
+      "practice": "Practice"
+    },
     "recentOralMode": "Exam",
     "recentExploreMode": "Explore",
     "recentTurns": "{{count}} turns",

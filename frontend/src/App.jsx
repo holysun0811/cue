@@ -17,13 +17,27 @@ import SettingsScreen from './screens/SettingsScreen.jsx';
 import StartExamModal from './screens/StartExamModal.jsx';
 import FakeCameraScreen from './screens/FakeCameraScreen.jsx';
 import TopicLoadingScreen from './screens/TopicLoadingScreen.jsx';
+import RecentPracticeScreen from './screens/RecentPracticeScreen.jsx';
 import GlobalLoadingOverlay from './components/common/GlobalLoadingOverlay.jsx';
+import {
+  HOME_RECENT_LIMIT,
+  buildExamCoverMetadata,
+  buildExploreCoverMetadata,
+  buildLearnHistoryItem,
+  buildPresetTopicCoverMetadata,
+  buildSpeakHistoryItem,
+  copyRecentCoverMetadata,
+  describePracticeHistoryItems,
+  stampSession,
+  upsertPracticeHistory
+} from './lib/practiceHistory.js';
 import { uiTheme } from './lib/uiTheme.js';
 
 function stepFromPath(pathname) {
   if (pathname === '/') return 'home';
   if (pathname === '/settings') return 'settings';
   if (pathname === '/camera') return 'camera';
+  if (pathname === '/recent-practice') return 'recentPractice';
   if (pathname === '/learn' || pathname.startsWith('/learn/')) return 'learn';
   if (pathname === '/bridge') return 'bridge';
   if (pathname === '/speak/prep') return 'prep';
@@ -37,6 +51,18 @@ const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'fr', 'de', 'es'];
 
 const DEFAULT_SESSION = {
   sessionId: '',
+  createdAt: '',
+  updatedAt: '',
+  lastRoute: '',
+  sourceType: '',
+  presetTopicId: '',
+  presetTopicTitle: '',
+  presetTopicSubtitle: '',
+  presetTopicCoverVariant: '',
+  presetTopicIcon: '',
+  presetTopicGradient: '',
+  coverType: '',
+  coverPayload: null,
   taskType: '',
   appLanguage: '',
   targetLanguage: 'en',
@@ -68,6 +94,18 @@ const DEFAULT_SESSION = {
 
 const DEFAULT_LEARN_SESSION = {
   learnSessionId: '',
+  createdAt: '',
+  updatedAt: '',
+  lastRoute: '',
+  sourceType: '',
+  presetTopicId: '',
+  presetTopicTitle: '',
+  presetTopicSubtitle: '',
+  presetTopicCoverVariant: '',
+  presetTopicIcon: '',
+  presetTopicGradient: '',
+  coverType: '',
+  coverPayload: null,
   title: '',
   topicOrMaterial: '',
   persona: {
@@ -85,10 +123,13 @@ const DEFAULT_LEARN_SESSION = {
 };
 
 function normalizeSpeakSession(response, settings, extra = {}) {
+  const now = new Date().toISOString();
   return {
     ...DEFAULT_SESSION,
     ...response,
     sessionId: response.speakSessionId || response.sessionId,
+    createdAt: response.createdAt || extra.createdAt || now,
+    updatedAt: response.updatedAt || extra.updatedAt || now,
     appLanguage: settings.uiLanguage,
     targetLanguage: settings.targetLanguage,
     round: 1,
@@ -160,6 +201,7 @@ export default function App() {
     appLanguage: settings.uiLanguage,
     targetLanguage: settings.targetLanguage
   }));
+  const [practiceHistory, setPracticeHistory] = useState([]);
   const [learnBusy, setLearnBusy] = useState(false);
   const [learnError, setLearnError] = useState('');
   const [bridgeBusy, setBridgeBusy] = useState(false);
@@ -180,10 +222,30 @@ export default function App() {
   const canPractice = useMemo(() => Boolean(session.sessionId && session.speakingPlan.length), [session]);
   const showGlobalLoading = Boolean(globalLoadingKey) || speakBusy || (bridgeBusy && step !== 'learn');
   const globalLoadingLabel = globalLoadingKey ? t(globalLoadingKey) : speakBusy ? t('loading.preparingSpeak') : t('loading.working');
+  const recentPracticeItems = useMemo(
+    () => describePracticeHistoryItems(practiceHistory, { language: settings.uiLanguage, t }),
+    [practiceHistory, settings.uiLanguage, t]
+  );
+  const homeRecentItems = useMemo(
+    () => recentPracticeItems.slice(0, HOME_RECENT_LIMIT),
+    [recentPracticeItems]
+  );
 
   useEffect(() => {
     window.localStorage.setItem('cue-target-language', settings.targetLanguage);
   }, [settings.targetLanguage]);
+
+  useEffect(() => {
+    const item = buildLearnHistoryItem(learnSession);
+    if (!item) return;
+    setPracticeHistory((current) => upsertPracticeHistory(current, item));
+  }, [learnSession]);
+
+  useEffect(() => {
+    const item = buildSpeakHistoryItem(session);
+    if (!item) return;
+    setPracticeHistory((current) => upsertPracticeHistory(current, item));
+  }, [session]);
 
   const startLearn = () => {
     setBridgeData(null);
@@ -196,13 +258,33 @@ export default function App() {
     setStartExamOpen(true);
   };
 
-  const continueSpeak = () => {
-    navigate('/speak/prep');
+  const openRecentPracticeList = () => {
+    navigate('/recent-practice');
   };
 
-  const continueLearn = () => {
-    if (!learnSession.learnSessionId) return;
-    navigate(`/learn/${learnSession.learnSessionId}`);
+  const openPracticeHistoryItem = (item) => {
+    const historyItem = practiceHistory.find((current) => current.id === item.id) || item;
+    const snapshot = historyItem.snapshot || {};
+
+    if (historyItem.source === 'learn') {
+      const nextLearnSession = {
+        ...DEFAULT_LEARN_SESSION,
+        ...snapshot,
+        lastRoute: snapshot.lastRoute || `/learn/${snapshot.learnSessionId}`
+      };
+      setLearnSession(nextLearnSession);
+      navigate(nextLearnSession.lastRoute || `/learn/${nextLearnSession.learnSessionId}`);
+      return;
+    }
+
+    if (historyItem.source === 'speak') {
+      const nextSession = {
+        ...DEFAULT_SESSION,
+        ...snapshot
+      };
+      setSession(nextSession);
+      navigate(historyItem.lastRoute || snapshot.lastRoute || '/speak/prep');
+    }
   };
 
   const startFromTopic = (topic) => {
@@ -217,14 +299,18 @@ export default function App() {
     setLearnBusy(true);
     try {
       const starterMessage = t('learn.chatStarter');
+      const coverMetadata = buildPresetTopicCoverMetadata(topic, t);
       const response = await startLearnSession({
         topicOrMaterial: topic.seed,
         persona: { type: 'guide', name: '' },
         appLanguage: settings.uiLanguage,
         targetLanguage: settings.targetLanguage
       });
-      setLearnSession({
+      setLearnSession(stampSession({
         learnSessionId: response.learnSessionId,
+        lastRoute: `/learn/${response.learnSessionId}`,
+        mode: 'explore',
+        ...coverMetadata,
         title: response.title,
         topicOrMaterial: topic.seed,
         appLanguage: settings.uiLanguage,
@@ -237,7 +323,7 @@ export default function App() {
           { role: 'assistant', content: response.openingMessage }
         ],
         collectedState: response.collectedState || DEFAULT_LEARN_SESSION.collectedState
-      });
+      }));
       return response.learnSessionId;
     } catch (error) {
       setLearnError('learn.startError');
@@ -266,8 +352,16 @@ export default function App() {
         appLanguage: settings.uiLanguage,
         targetLanguage: settings.targetLanguage
       });
-      setLearnSession({
+      const coverMetadata = buildExploreCoverMetadata({
+        sourceType: input.sourceType,
+        text: analysis?.promptSummary || analysis?.extractedText || input.topicOrMaterial,
+        imageBase64: input.imageBase64
+      });
+      setLearnSession(stampSession({
         learnSessionId: response.learnSessionId,
+        lastRoute: `/learn/${response.learnSessionId}`,
+        mode: 'explore',
+        ...coverMetadata,
         title: response.title,
         topicOrMaterial: analysis?.extractedText || input.topicOrMaterial,
         appLanguage: settings.uiLanguage,
@@ -280,7 +374,7 @@ export default function App() {
           { role: 'assistant', content: response.openingMessage }
         ],
         collectedState: response.collectedState || DEFAULT_LEARN_SESSION.collectedState
-      });
+      }));
       navigate(`/learn/${response.learnSessionId}`);
     } catch {
       setLearnError('learn.startError');
@@ -294,10 +388,18 @@ export default function App() {
     const rawMessage = typeof input === 'string' ? input : input.message;
     setLearnBusy(true);
     setLearnError('');
-    setLearnSession((current) => ({
+    setLearnSession((current) => stampSession({
       ...current,
+      ...(typeof input === 'object' && input.imageBase64 && current.sourceType !== 'preset_topic'
+        ? buildExploreCoverMetadata({
+            sourceType: 'image_material',
+            text: rawMessage || current.topicOrMaterial || current.title,
+            imageBase64: input.imageBase64
+          })
+        : {}),
+      lastRoute: current.learnSessionId ? `/learn/${current.learnSessionId}` : current.lastRoute,
       chatHistory: [...(current.chatHistory || []), { role: 'user', content: rawMessage || 'Material attached' }]
-    }));
+    }, current));
     try {
       const analysis = typeof input === 'object' && input.imageBase64
         ? await analyzeInput({
@@ -313,12 +415,13 @@ export default function App() {
         appLanguage: settings.uiLanguage,
         targetLanguage: settings.targetLanguage
       });
-      setLearnSession((current) => ({
+      setLearnSession((current) => stampSession({
         ...current,
+        lastRoute: current.learnSessionId ? `/learn/${current.learnSessionId}` : current.lastRoute,
         chatHistory: [...(current.chatHistory || []), { role: 'assistant', content: response.assistantMessage }],
         collectedState: response.collectedState || current.collectedState,
         canBridge: response.canBridge
-      }));
+      }, current));
     } catch {
       setLearnError('learn.messageError');
     } finally {
@@ -338,6 +441,8 @@ export default function App() {
     });
     setSession(normalizeSpeakSession(response, settings, {
       originalInput: { entryType: 'bridge', bridgeId: bridge.bridgeId, selectedPrompt },
+      lastRoute: '/speak/prep',
+      ...copyRecentCoverMetadata(learnSession),
       promptSource: 'bridge',
       selectedPrompt: selectedPrompt || response.selectedPrompt,
       selectedApproach: response.selectedApproach || answerApproach
@@ -393,8 +498,16 @@ export default function App() {
       appLanguage: settings.uiLanguage,
       targetLanguage: settings.targetLanguage
     });
+    const coverMetadata = buildExamCoverMetadata({
+      sourceType: taskInput.sourceType,
+      imageBase64: taskInput.imageBase64
+    });
 
-    return normalizeSpeakSession(response, settings, { originalInput: { entryType: 'direct', taskInput } });
+    return normalizeSpeakSession(response, settings, {
+      lastRoute: '/speak/practice',
+      ...coverMetadata,
+      originalInput: { entryType: 'direct', taskInput }
+    });
   };
 
   const startDirectExam = async (taskInput) => {
@@ -429,6 +542,10 @@ export default function App() {
       targetLanguage: settings.targetLanguage
     });
     setSession((current) => normalizeSpeakSession(response, settings, {
+      createdAt: current.createdAt,
+      updatedAt: new Date().toISOString(),
+      lastRoute: '/speak/prep',
+      ...copyRecentCoverMetadata(current),
       originalInput: current.originalInput,
       promptSource: current.promptSource,
       selectedPrompt: current.selectedPrompt || response.selectedPrompt,
@@ -461,7 +578,12 @@ export default function App() {
   };
 
   const updateSession = (patch) => {
-    setSession((current) => ({ ...current, ...patch }));
+    const currentSpeakRoute = location.pathname.startsWith('/speak/') ? location.pathname : '';
+    setSession((current) => stampSession({
+      ...current,
+      ...patch,
+      lastRoute: patch.lastRoute || currentSpeakRoute || current.lastRoute
+    }, current));
   };
 
   const primePracticeEntryAudio = (sourceSession = session) => {
@@ -491,9 +613,10 @@ export default function App() {
     primePracticeEntryAudio(sourceSession);
     flushSync(() => {
       setPracticeViewId((current) => current + 1);
-      setSession((current) => ({
+      setSession((current) => stampSession({
         ...current,
         ...sourceSession,
+        lastRoute: '/speak/practice',
         round: 1,
         hintLevel: 'phrases',
         hintSupportLevel: 'strong_support',
@@ -501,7 +624,7 @@ export default function App() {
         latestAttempt: null,
         latestReview: null,
         take2Goal: ''
-      }));
+      }, sourceSession));
     });
     navigate('/speak/practice');
   };
@@ -531,6 +654,7 @@ export default function App() {
       setReviewViewId((current) => current + 1);
       updateSession({
         conversationMessages: messages,
+        lastRoute: '/speak/review',
         latestAttempt,
         latestReview: null
       });
@@ -555,6 +679,7 @@ export default function App() {
       updateSession({
         round: response.nextRound,
         hintLevel: response.hintLevel,
+        lastRoute: '/speak/practice',
         take2Goal: response.take2Goal,
         conversationMessages: [],
         latestAttempt: null,
@@ -595,13 +720,19 @@ export default function App() {
             {step === 'home' && (
               <HomeScreen
                 key="home"
-                onContinueLearn={continueLearn}
-                onContinueSpeak={continueSpeak}
+                onOpenRecent={openPracticeHistoryItem}
+                onOpenRecentAll={openRecentPracticeList}
                 onStartLearn={startLearn}
                 onStartSpeak={startSpeak}
                 onStartTopic={startFromTopic}
-                learnSession={learnSession}
-                session={session}
+                recentItems={homeRecentItems}
+              />
+            )}
+            {step === 'recentPractice' && (
+              <RecentPracticeScreen
+                key="recent-practice"
+                items={recentPracticeItems}
+                onOpenRecent={openPracticeHistoryItem}
               />
             )}
             {step === 'topicLoading' && (
@@ -623,7 +754,11 @@ export default function App() {
                 key="learn"
                 learnSession={isNewLearnRoute ? DEFAULT_LEARN_SESSION : learnSession}
                 onBuildBridge={buildBridge}
-                onLearnPatch={(patch) => setLearnSession((current) => ({ ...current, ...patch }))}
+                onLearnPatch={(patch) => setLearnSession((current) => stampSession({
+                  ...current,
+                  ...patch,
+                  lastRoute: current.learnSessionId ? `/learn/${current.learnSessionId}` : current.lastRoute
+                }, current))}
                 onSendMessage={sendLearnThought}
                 onStart={startLearnFlow}
                 settings={settings}
