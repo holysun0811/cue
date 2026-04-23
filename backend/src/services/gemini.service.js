@@ -517,7 +517,7 @@ export async function generateActionableReview(payload = {}) {
     round,
     speakingPlanJson: JSON.stringify(speakingPlan),
     conversationOrPlaceholder: conversationText || '(not provided)',
-    reviewTranscript
+    reviewTranscript: reviewTranscript || '(empty or unclear answer)'
   });
 
   try {
