@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { BookOpenText, Camera, Check, ChevronRight, Mic, Send, Sparkles, X } from 'lucide-react';
 import { fileToDataUrl, createSpeechRecognition } from '../lib/media.js';
 import { pageTransition } from '../lib/motion.js';
-import { targetLanguagePrompts } from '../lib/practicePrompts.js';
+import { localizedPracticePrompts } from '../lib/practicePrompts.js';
 import BottomSheet from '../components/common/BottomSheet.jsx';
 import { uiTheme } from '../lib/uiTheme.js';
 
@@ -32,8 +32,9 @@ function RecapList({ emptyLabel, items = [] }) {
   );
 }
 
-function promptsFromRecap({ targetLanguage = 'en', title = '', t }) {
-  return targetLanguagePrompts({
+function promptsFromRecap({ appLanguage = 'en', targetLanguage = 'en', title = '', t }) {
+  return localizedPracticePrompts({
+    appLanguage,
     targetLanguage,
     title,
     fallbackTopic: t('learn.recapTopicFallback')
@@ -41,12 +42,12 @@ function promptsFromRecap({ targetLanguage = 'en', title = '', t }) {
 }
 
 function TopicRecapSheet({ busy, collectedState, onBuildBridge, onClose, open, targetLanguage, title }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedPromptId, setSelectedPromptId] = useState('');
   const facts = collectedState?.keyFacts || [];
   const viewpoints = collectedState?.viewpoints || [];
   const terms = collectedState?.targetTerms || [];
-  const prompts = promptsFromRecap({ targetLanguage, title, t });
+  const prompts = promptsFromRecap({ appLanguage: i18n.language, targetLanguage, title, t });
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
 
   useEffect(() => {
@@ -121,6 +122,11 @@ function TopicRecapSheet({ busy, collectedState, onBuildBridge, onClose, open, t
                     </span>
                   </span>
                   <span className="block text-sm font-black leading-snug text-slate-800">{prompt.questionText}</span>
+                  {prompt.translatedQuestionText && prompt.translatedQuestionText !== prompt.questionText && (
+                    <span className="mt-1.5 block text-[12px] font-bold leading-snug text-slate-400">
+                      {prompt.translatedQuestionText}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -131,42 +137,177 @@ function TopicRecapSheet({ busy, collectedState, onBuildBridge, onClose, open, t
   );
 }
 
+const PERSONA_DISPLAY_NAMES = {
+  dolly: {
+    en: 'Dolly',
+    'zh-CN': '多莉',
+    fr: 'Dolly',
+    de: 'Dolly',
+    es: 'Dolly'
+  },
+  geneticist: {
+    en: 'Geneticist',
+    'zh-CN': '遗传学家',
+    fr: 'Geneticien',
+    de: 'Genetiker',
+    es: 'Genetista'
+  },
+  science_journalist: {
+    en: 'Journalist',
+    'zh-CN': '记者',
+    fr: 'Journaliste',
+    de: 'Journalist',
+    es: 'Periodista'
+  },
+  ethics_critic: {
+    en: 'Ethics critic',
+    'zh-CN': '伦理批评者',
+    fr: 'Critique ethique',
+    de: 'Ethikkritiker',
+    es: 'Critico etico'
+  },
+  gustave_eiffel: {
+    en: 'Gustave Eiffel',
+    'zh-CN': '古斯塔夫·埃菲尔',
+    fr: 'Gustave Eiffel',
+    de: 'Gustave Eiffel',
+    es: 'Gustave Eiffel'
+  },
+  architecture_guide: {
+    en: 'Architecture guide',
+    'zh-CN': '建筑向导',
+    fr: 'Guide architecture',
+    de: 'Architekturfuehrer',
+    es: 'Guia de arquitectura'
+  },
+  paris_historian: {
+    en: 'Paris historian',
+    'zh-CN': '巴黎历史学家',
+    fr: 'Historien de Paris',
+    de: 'Paris-Historiker',
+    es: 'Historiador de Paris'
+  },
+  design_critic: {
+    en: 'Critic',
+    'zh-CN': '设计评论家',
+    fr: 'Critique',
+    de: 'Kritiker',
+    es: 'Critico'
+  },
+  ai_researcher: {
+    en: 'Researcher',
+    'zh-CN': 'AI 研究员',
+    fr: 'Chercheur',
+    de: 'Forscher',
+    es: 'Investigador'
+  },
+  teacher: {
+    en: 'Teacher',
+    'zh-CN': '老师',
+    fr: 'Professeur',
+    de: 'Lehrer',
+    es: 'Profesor'
+  },
+  journalist: {
+    en: 'Journalist',
+    'zh-CN': '记者',
+    fr: 'Journaliste',
+    de: 'Journalist',
+    es: 'Periodista'
+  },
+  skeptic: {
+    en: 'Skeptic',
+    'zh-CN': '怀疑者',
+    fr: 'Sceptique',
+    de: 'Skeptiker',
+    es: 'Esceptico'
+  },
+  guide: {
+    en: 'Guide',
+    'zh-CN': '向导',
+    fr: 'Guide',
+    de: 'Guide',
+    es: 'Guia'
+  },
+  expert: {
+    en: 'Expert',
+    'zh-CN': '专家',
+    fr: 'Expert',
+    de: 'Experte',
+    es: 'Experto'
+  },
+  critic: {
+    en: 'Critic',
+    'zh-CN': '评论者',
+    fr: 'Critique',
+    de: 'Kritiker',
+    es: 'Critico'
+  }
+};
+
+function personaOption({ id, name, type }) {
+  return {
+    id,
+    type,
+    name,
+    displayNames: PERSONA_DISPLAY_NAMES[id] || { en: name }
+  };
+}
+
+function languageKey(language = 'en') {
+  if (language.startsWith('zh')) return 'zh-CN';
+  if (language.startsWith('fr')) return 'fr';
+  if (language.startsWith('de')) return 'de';
+  if (language.startsWith('es')) return 'es';
+  return 'en';
+}
+
+function personaLabel(persona = {}, language = 'en') {
+  const key = languageKey(language);
+  return persona.displayNames?.[key] || persona.displayNames?.[key.split('-')[0]] || persona.displayNames?.en || persona.label || persona.name || '';
+}
+
+function samePersona(a = {}, b = {}) {
+  if (a.id && b.id) return a.id === b.id;
+  return a.name === b.name;
+}
+
 function personaSuggestionsForTopic(topic = '') {
   const normalized = topic.toLowerCase();
   if (normalized.includes('dolly') || normalized.includes('clone') || normalized.includes('cloning') || normalized.includes('克隆')) {
     return [
-      { type: 'character', name: 'Dolly', label: 'Dolly' },
-      { type: 'expert', name: 'Geneticist', label: 'Geneticist' },
-      { type: 'guide', name: 'Science journalist', label: 'Journalist' },
-      { type: 'expert', name: 'Ethics critic', label: 'Ethics critic' }
+      personaOption({ id: 'dolly', type: 'character', name: 'Dolly' }),
+      personaOption({ id: 'geneticist', type: 'expert', name: 'Geneticist' }),
+      personaOption({ id: 'science_journalist', type: 'guide', name: 'Science journalist' }),
+      personaOption({ id: 'ethics_critic', type: 'expert', name: 'Ethics critic' })
     ];
   }
   if (normalized.includes('eiffel') || normalized.includes('tower') || normalized.includes('埃菲尔')) {
     return [
-      { type: 'character', name: 'Gustave Eiffel', label: 'Gustave Eiffel' },
-      { type: 'guide', name: 'Architecture guide', label: 'Architecture guide' },
-      { type: 'expert', name: 'Paris historian', label: 'Paris historian' },
-      { type: 'expert', name: 'Design critic', label: 'Critic' }
+      personaOption({ id: 'gustave_eiffel', type: 'character', name: 'Gustave Eiffel' }),
+      personaOption({ id: 'architecture_guide', type: 'guide', name: 'Architecture guide' }),
+      personaOption({ id: 'paris_historian', type: 'expert', name: 'Paris historian' }),
+      personaOption({ id: 'design_critic', type: 'expert', name: 'Design critic' })
     ];
   }
   if (normalized.includes('ai') || normalized.includes('ethic') || normalized.includes('人工智能')) {
     return [
-      { type: 'expert', name: 'AI researcher', label: 'Researcher' },
-      { type: 'guide', name: 'Teacher', label: 'Teacher' },
-      { type: 'guide', name: 'Journalist', label: 'Journalist' },
-      { type: 'expert', name: 'Skeptic', label: 'Skeptic' }
+      personaOption({ id: 'ai_researcher', type: 'expert', name: 'AI researcher' }),
+      personaOption({ id: 'teacher', type: 'guide', name: 'Teacher' }),
+      personaOption({ id: 'journalist', type: 'guide', name: 'Journalist' }),
+      personaOption({ id: 'skeptic', type: 'expert', name: 'Skeptic' })
     ];
   }
   return [
-    { type: 'guide', name: 'Guide', label: 'Guide' },
-    { type: 'expert', name: 'Expert', label: 'Expert' },
-    { type: 'guide', name: 'Journalist', label: 'Journalist' },
-    { type: 'expert', name: 'Critic', label: 'Critic' }
+    personaOption({ id: 'guide', type: 'guide', name: 'Guide' }),
+    personaOption({ id: 'expert', type: 'expert', name: 'Expert' }),
+    personaOption({ id: 'journalist', type: 'guide', name: 'Journalist' }),
+    personaOption({ id: 'critic', type: 'expert', name: 'Critic' })
   ];
 }
 
 function PersonaSuggestionRow({ onSelect, persona, suggestions }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!suggestions.length) return null;
 
   return (
@@ -174,17 +315,17 @@ function PersonaSuggestionRow({ onSelect, persona, suggestions }) {
       <p className="mb-1.5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{t('learn.personaSuggestions')}</p>
       <div className="flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {suggestions.map((suggestion) => {
-          const selected = persona?.name === suggestion.name;
+          const selected = samePersona(persona, suggestion);
           return (
             <button
-              className={`shrink-0 rounded-full px-3 py-2 text-xs font-black transition ${
+              className={`min-w-[72px] shrink-0 rounded-full px-3.5 py-2 text-center text-xs font-black transition ${
                 selected ? uiTheme.chip.selected : uiTheme.chip.base
               }`}
-              key={suggestion.name}
+              key={suggestion.id || suggestion.name}
               onClick={() => onSelect(suggestion)}
               type="button"
             >
-              {suggestion.label}
+              {personaLabel(suggestion, i18n.language)}
             </button>
           );
         })}
@@ -194,7 +335,7 @@ function PersonaSuggestionRow({ onSelect, persona, suggestions }) {
 }
 
 function PersonaStatusPill({ onClick, persona }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!persona?.name) return null;
 
   return (
@@ -204,19 +345,19 @@ function PersonaStatusPill({ onClick, persona }) {
       type="button"
     >
       <span className="text-slate-400">{t('learn.personaCurrent')}</span>
-      <span className={`truncate ${uiTheme.accent.text}`}>{persona.name}</span>
+      <span className={`truncate ${uiTheme.accent.text}`}>{personaLabel(persona, i18n.language)}</span>
     </button>
   );
 }
 
 function PersonaSheet({ onChange, onClose, open, persona, suggestions }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <BottomSheet onClose={onClose} open={open} title={t('learn.personaSuggestions')}>
       <div className="space-y-2">
         {suggestions.map((suggestion) => {
-          const selected = persona?.name === suggestion.name;
+          const selected = samePersona(persona, suggestion);
           return (
             <button
               className={`flex min-h-[54px] w-full items-center justify-between rounded-[20px] border px-4 text-left text-sm font-black transition ${
@@ -224,14 +365,14 @@ function PersonaSheet({ onChange, onClose, open, persona, suggestions }) {
                   ? `${uiTheme.selectable.selected} text-slate-950`
                   : `${uiTheme.selectable.muted} text-slate-600`
               }`}
-              key={suggestion.name}
+              key={suggestion.id || suggestion.name}
               onClick={() => {
                 onChange(suggestion);
                 onClose();
               }}
               type="button"
             >
-              {suggestion.label}
+              {personaLabel(suggestion, i18n.language)}
               {selected && <Sparkles size={16} className={uiTheme.accent.text} />}
             </button>
           );

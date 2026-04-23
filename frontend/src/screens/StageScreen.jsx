@@ -15,6 +15,28 @@ function languageKey(language = 'en') {
   return 'en';
 }
 
+function shouldShowExaminerTranslation({ appLanguage = 'en', practiceLanguage = 'en' } = {}) {
+  return languageKey(appLanguage) !== languageKey(practiceLanguage);
+}
+
+function examinerTranslation(message = {}) {
+  return message.appLanguageTranslation || message.translatedText || message.translation || '';
+}
+
+function hydrateExaminerTranslations(messages = [], session = {}) {
+  return messages.map((message) => {
+    if (message.role !== 'examiner' || examinerTranslation(message)) return message;
+    const isInitialExaminer = message.id === 'examiner_initial' || message.text === session.examinerPromptText;
+
+    if (!isInitialExaminer || !session.examinerPromptTranslation) return message;
+
+    return {
+      ...message,
+      appLanguageTranslation: session.examinerPromptTranslation
+    };
+  });
+}
+
 function fallbackExaminerPrompt(session) {
   const prompt = session.canonicalPrompt || session.promptSummary || '';
   const copy = {
@@ -57,8 +79,9 @@ function RecordingBars({ active = false }) {
   );
 }
 
-function ExaminerMessage({ message, onPlay, playing }) {
+function ExaminerMessage({ message, onPlay, playing, showTranslation }) {
   const { t } = useTranslation();
+  const translation = showTranslation ? examinerTranslation(message) : '';
 
   return (
     <div className="flex justify-start">
@@ -70,6 +93,11 @@ function ExaminerMessage({ message, onPlay, playing }) {
         <div className="flex items-start gap-2">
           <div className="rounded-[22px] rounded-tl-md border border-white bg-white/88 p-3.5 shadow-[0_10px_24px_rgba(91,92,126,0.09)] backdrop-blur-xl">
             <p className="text-[14px] font-semibold leading-relaxed text-slate-800">{message.text}</p>
+            {translation && (
+              <p className="mt-2 border-t border-slate-200/70 pt-2 text-[12px] font-normal leading-relaxed text-slate-400">
+                {translation}
+              </p>
+            )}
           </div>
           {message.audioUrl && (
             <button
@@ -570,18 +598,23 @@ export default function StageScreen({ entryAudioRef, onSessionPatch, session }) 
   const [playingExaminerId, setPlayingExaminerId] = useState('');
   const [typingLabelVisible, setTypingLabelVisible] = useState(false);
   const [messages, setMessages] = useState(() => {
-    if (session.conversationMessages?.length) return session.conversationMessages;
-    if (session.initialMessages?.length) return session.initialMessages;
-    return [
+    if (session.conversationMessages?.length) {
+      return hydrateExaminerTranslations(session.conversationMessages, session);
+    }
+    if (session.initialMessages?.length) {
+      return hydrateExaminerTranslations(session.initialMessages, session);
+    }
+    return hydrateExaminerTranslations([
       {
         id: 'examiner_initial',
         role: 'examiner',
         type: 'text',
         text: session.examinerPromptText || fallbackExaminerPrompt(session),
+        appLanguageTranslation: session.examinerPromptTranslation || '',
         audioUrl: session.examinerPromptAudio || '',
         createdAt: new Date().toISOString()
       }
-    ];
+    ], session);
   });
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
@@ -595,6 +628,10 @@ export default function StageScreen({ entryAudioRef, onSessionPatch, session }) 
   const examinerAudioRef = useRef(null);
   const unmountStopTimerRef = useRef(null);
   const hintData = useMemo(() => session.hintData || buildFallbackHintData(session), [session]);
+  const showExaminerTranslation = shouldShowExaminerTranslation({
+    appLanguage: session.appLanguage,
+    practiceLanguage: session.targetLanguage
+  });
 
   const stopExaminerAudio = useCallback(({ updateState = true } = {}) => {
     if (examinerAudioRef.current) {
@@ -789,6 +826,7 @@ export default function StageScreen({ entryAudioRef, onSessionPatch, session }) 
       const attempt = await submitPractice({
         speakSessionId: session.sessionId,
         round: session.round,
+        appLanguage: session.appLanguage,
         targetLanguage: session.targetLanguage,
         audioBase64: pending.audioBase64,
         hintLevel: 'phrases',
@@ -853,6 +891,7 @@ export default function StageScreen({ entryAudioRef, onSessionPatch, session }) 
                     message={message}
                     onPlay={playExaminerAudio}
                     playing={playingExaminerId === message.id}
+                    showTranslation={showExaminerTranslation}
                   />
                 )
             ))}

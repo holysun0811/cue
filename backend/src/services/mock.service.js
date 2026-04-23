@@ -54,10 +54,11 @@ function topicForTargetLanguage(topicTitle, targetLanguage) {
 }
 
 function languageKey(language = 'en') {
-  if (language.startsWith('zh')) return 'zh-CN';
-  if (language.startsWith('fr')) return 'fr';
-  if (language.startsWith('de')) return 'de';
-  if (language.startsWith('es')) return 'es';
+  const value = language || 'en';
+  if (value.startsWith('zh')) return 'zh-CN';
+  if (value.startsWith('fr')) return 'fr';
+  if (value.startsWith('de')) return 'de';
+  if (value.startsWith('es')) return 'es';
   return 'en';
 }
 
@@ -441,6 +442,18 @@ export function mockExaminerPrompt({ promptSummary = '', targetLanguage = 'en' }
   return copy[languageKey(targetLanguage)] || copy.en;
 }
 
+export function mockExaminerPromptMessage({ promptSummary = '', targetLanguage = 'en', appLanguage = 'en' } = {}) {
+  const targetKey = languageKey(targetLanguage);
+  const appKey = languageKey(appLanguage);
+
+  return {
+    text: mockExaminerPrompt({ promptSummary, targetLanguage }),
+    appLanguageTranslation: targetKey === appKey
+      ? ''
+      : mockExaminerPrompt({ promptSummary, targetLanguage: appLanguage })
+  };
+}
+
 export function mockExaminerFollowUp({ targetLanguage = 'en', userTurnCount = 1 } = {}) {
   const index = Math.max(0, userTurnCount - 1);
   const copy = {
@@ -478,6 +491,18 @@ export function mockExaminerFollowUp({ targetLanguage = 'en', userTurnCount = 1 
 
   const questions = copy[languageKey(targetLanguage)] || copy.en;
   return questions[index % questions.length];
+}
+
+export function mockExaminerFollowUpMessage({ targetLanguage = 'en', appLanguage = 'en', userTurnCount = 1 } = {}) {
+  const targetKey = languageKey(targetLanguage);
+  const appKey = languageKey(appLanguage);
+
+  return {
+    text: mockExaminerFollowUp({ targetLanguage, userTurnCount }),
+    appLanguageTranslation: targetKey === appKey
+      ? ''
+      : mockExaminerFollowUp({ targetLanguage: appLanguage, userTurnCount })
+  };
 }
 
 export function mockPracticeHintData({ targetLanguage = 'en', userTurnCount = 1 } = {}) {

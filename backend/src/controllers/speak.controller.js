@@ -1,4 +1,4 @@
-import { analyzePromptInput, buildSpeakingPlan, generateExaminerFollowUp, generateExaminerPrompt, generatePracticeHintData } from '../services/gemini.service.js';
+import { analyzePromptInput, buildSpeakingPlan, generateExaminerFollowUpMessage, generateExaminerPromptMessage, generatePracticeHintData } from '../services/gemini.service.js';
 import { transcribeAudio } from '../services/stt.service.js';
 import { synthesizeText } from '../services/tts.service.js';
 import { createAttempt, createSession, getBridge, getSession, updateSession } from '../services/session.service.js';
@@ -131,10 +131,12 @@ export async function prepareSpeak(req, res, next) {
         : req.body.taskInput?.text
     });
     const canonicalPrompt = promptSummary;
-    const examinerPromptText = await generateExaminerPrompt({
+    const examinerPromptMessage = await generateExaminerPromptMessage({
       promptSummary: canonicalPrompt,
-      targetLanguage
+      targetLanguage,
+      appLanguage
     });
+    const examinerPromptText = examinerPromptMessage.text;
     const examinerAudio = await synthesizeText({
       text: examinerPromptText,
       language: targetLanguage
@@ -146,6 +148,7 @@ export async function prepareSpeak(req, res, next) {
         role: 'examiner',
         type: 'text',
         text: examinerPromptText,
+        appLanguageTranslation: examinerPromptMessage.appLanguageTranslation || '',
         audioUrl: examinerAudio.audioUrl,
         createdAt: new Date().toISOString()
       }
@@ -159,6 +162,7 @@ export async function prepareSpeak(req, res, next) {
       followUpEnabled: req.body.followUpEnabled ?? true,
       canonicalPrompt,
       examinerPromptText,
+      examinerPromptTranslation: examinerPromptMessage.appLanguageTranslation || '',
       examinerPromptAudio: examinerAudio.audioUrl,
       hintData,
       initialMessages,
@@ -203,6 +207,7 @@ export async function prepareSpeak(req, res, next) {
       followUpEnabled: updated.followUpEnabled,
       canonicalPrompt: updated.canonicalPrompt,
       examinerPromptText: updated.examinerPromptText,
+      examinerPromptTranslation: updated.examinerPromptTranslation,
       examinerPromptAudio: updated.examinerPromptAudio,
       hintData: updated.hintData,
       initialMessages: updated.initialMessages,
@@ -251,21 +256,25 @@ export async function submitSpeak(req, res, next) {
       createdAt: req.body.createdAt
     });
     const userTurnCount = withUserMessage.filter((message) => message.role === 'user').length;
-    const examinerReplyText = await generateExaminerFollowUp({
+    const appLanguage = session?.appLanguage || req.body.appLanguage || 'zh-CN';
+    const targetLanguage = session?.targetLanguage || req.body.targetLanguage || 'en';
+    const examinerReplyMessage = await generateExaminerFollowUpMessage({
       promptSummary: session?.canonicalPrompt || session?.promptSummary || req.body.promptSummary || '',
-      targetLanguage: session?.targetLanguage || req.body.targetLanguage || 'en',
+      targetLanguage,
+      appLanguage,
       speakingPlan: session?.speakingPlan || req.body.speakingPlan || [],
       conversationMessages: withUserMessage,
       lastUserTranscript: transcriptResult.transcript,
       userTurnCount
     });
+    const examinerReplyText = examinerReplyMessage.text;
     const [examinerAudio, hintData] = await Promise.all([
       synthesizeText({
         text: examinerReplyText,
-        language: session?.targetLanguage || req.body.targetLanguage || 'en'
+        language: targetLanguage
       }),
       generatePracticeHintData({
-        targetLanguage: session?.targetLanguage || req.body.targetLanguage || 'en',
+        targetLanguage,
         promptSummary: session?.canonicalPrompt || session?.promptSummary || req.body.promptSummary || '',
         examinerQuestion: examinerReplyText,
         lastUserTranscript: transcriptResult.transcript,
@@ -279,6 +288,7 @@ export async function submitSpeak(req, res, next) {
       role: 'examiner',
       type: 'text',
       text: examinerReplyText,
+      appLanguageTranslation: examinerReplyMessage.appLanguageTranslation || '',
       audioUrl: examinerAudio.audioUrl,
       createdAt: new Date().toISOString()
     };

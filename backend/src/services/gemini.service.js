@@ -1,4 +1,4 @@
-import { mockBridge, mockExaminerFollowUp, mockExaminerPrompt, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockPracticeHintData, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
+import { mockBridge, mockExaminerFollowUp, mockExaminerFollowUpMessage, mockExaminerPrompt, mockExaminerPromptMessage, mockInputAnalysis, mockLearnMessage, mockLearnStart, mockPracticeHintData, mockReview, mockSampleAnswer, mockSpeakingPlan } from './mock.service.js';
 
 function hasGeminiKey() {
   return Boolean(process.env.GEMINI_API_KEY);
@@ -64,6 +64,36 @@ function extractJsonBlock(text) {
   }
 
   return JSON.parse(raw.slice(start, end + 1));
+}
+
+function languageKey(language = 'en') {
+  const value = language || 'en';
+  if (value.startsWith('zh')) return 'zh-CN';
+  if (value.startsWith('fr')) return 'fr';
+  if (value.startsWith('de')) return 'de';
+  if (value.startsWith('es')) return 'es';
+  return 'en';
+}
+
+function needsAppLanguageTranslation({ appLanguage = 'en', targetLanguage = 'en' } = {}) {
+  return languageKey(appLanguage) !== languageKey(targetLanguage);
+}
+
+function normalizeExaminerMessage(rawMessage = {}, fallbackMessage, textKey, options = {}) {
+  const needsTranslation = needsAppLanguageTranslation(options);
+  const text = typeof rawMessage?.[textKey] === 'string' && rawMessage[textKey].trim()
+    ? rawMessage[textKey].trim()
+    : fallbackMessage.text;
+  const rawTranslation = rawMessage?.appLanguageTranslation || rawMessage?.translatedText || rawMessage?.translation || '';
+
+  if (needsTranslation && !rawTranslation.trim()) {
+    return fallbackMessage;
+  }
+
+  return {
+    text,
+    appLanguageTranslation: needsTranslation ? rawTranslation.trim() : ''
+  };
 }
 
 export async function* streamCueCards(payload = {}) {
@@ -376,45 +406,58 @@ Rules:
   }
 }
 
-export async function generateExaminerPrompt(payload = {}) {
-  const { promptSummary = '', targetLanguage = 'en' } = payload;
+export async function generateExaminerPromptMessage(payload = {}) {
+  const { promptSummary = '', targetLanguage = 'en', appLanguage = 'en' } = payload;
+  const fallback = mockExaminerPromptMessage({ promptSummary, targetLanguage, appLanguage });
 
   if (!hasGeminiKey()) {
-    return mockExaminerPrompt({ promptSummary, targetLanguage });
+    return fallback;
   }
 
   const prompt = `
 You are a calm school speaking examiner.
-Turn the canonical prompt below into one natural spoken examiner question.
+Turn the canonical prompt below into one natural spoken examiner question, plus an app-language translation for display.
 
 Canonical prompt:
 ${promptSummary}
 
-Practice language:
+Practice language for the examiner's main message:
 ${targetLanguage}
+
+App language for the auxiliary translation:
+${appLanguage}
 
 Return strict JSON:
 {
-  "examinerPromptText": "one natural examiner message in the practice language"
+  "examinerPromptText": "one natural examiner message in the practice language",
+  "appLanguageTranslation": "translation of examinerPromptText in the app language, or empty string if app language and practice language are the same"
 }
 
 Rules:
-- Use the practice language only.
+- Use the practice language only for examinerPromptText.
+- Use the app language only for appLanguageTranslation.
 - Keep the original task requirement.
 - Sound like a real examiner or teacher, not a mechanical prompt reader.
 - Keep it concise enough to be spoken aloud.
+- The translation is auxiliary UI text. Keep it faithful, natural, concise, and label-free.
 `;
 
   try {
     const parsed = await generateJson(prompt);
-    return parsed.examinerPromptText || mockExaminerPrompt({ promptSummary, targetLanguage });
+    return normalizeExaminerMessage(parsed, fallback, 'examinerPromptText', { appLanguage, targetLanguage });
   } catch {
-    return mockExaminerPrompt({ promptSummary, targetLanguage });
+    return fallback;
   }
+}
+
+export async function generateExaminerPrompt(payload = {}) {
+  const message = await generateExaminerPromptMessage(payload);
+  return message.text || mockExaminerPrompt(payload);
 }
 
 function buildExaminerFollowUpPrompt({
   promptSummary = '',
+  appLanguage = 'en',
   targetLanguage = 'en',
   speakingPlan = [],
   conversationMessages = [],
@@ -441,6 +484,9 @@ ${promptSummary}
 Practice language:
 ${targetLanguage}
 
+App language:
+${appLanguage}
+
 Speaking plan for context only:
 ${JSON.stringify(speakingPlan)}
 
@@ -454,11 +500,13 @@ User answer count so far: ${userTurnCount}
 
 Return strict JSON:
 {
-  "examinerReplyText": "one natural spoken follow-up question in the practice language"
+  "examinerReplyText": "one natural spoken follow-up question in the practice language",
+  "appLanguageTranslation": "translation of examinerReplyText in the app language, or empty string if app language and practice language are the same"
 }
 
 Rules:
 - Always reply in the practice language / target language.
+- Use the app language only for appLanguageTranslation.
 - Sound like a real oral examiner or teacher.
 - Keep it natural, concise, and spoken.
 - Ask only one question at a time.
@@ -468,6 +516,7 @@ Rules:
 - Do not repeat the original prompt verbatim.
 - Do not end the practice automatically; the learner decides when to finish.
 - Do not produce visible labels, bullets, numbered lists, or JSON-like language inside examinerReplyText.
+- Keep appLanguageTranslation faithful, concise, and label-free.
 - If the latest answer is weak or very short, ask a simpler follow-up.
 - If the latest answer is already relevant, ask a deeper follow-up.
 - Choose one useful move: ask for an example, clarification, another point of view, cause/effect, consequence, future impact, or comparison.
@@ -476,17 +525,23 @@ Rules:
 }
 
 export async function generateExaminerFollowUp(payload = {}) {
-  const { targetLanguage = 'en', userTurnCount = 1 } = payload;
+  const message = await generateExaminerFollowUpMessage(payload);
+  return message.text || mockExaminerFollowUp(payload);
+}
+
+export async function generateExaminerFollowUpMessage(payload = {}) {
+  const { targetLanguage = 'en', appLanguage = 'en', userTurnCount = 1 } = payload;
+  const fallback = mockExaminerFollowUpMessage({ targetLanguage, appLanguage, userTurnCount });
 
   if (!hasGeminiKey()) {
-    return mockExaminerFollowUp({ targetLanguage, userTurnCount });
+    return fallback;
   }
 
   try {
     const parsed = await generateJson(buildExaminerFollowUpPrompt(payload));
-    return parsed.examinerReplyText || mockExaminerFollowUp({ targetLanguage, userTurnCount });
+    return normalizeExaminerMessage(parsed, fallback, 'examinerReplyText', { appLanguage, targetLanguage });
   } catch {
-    return mockExaminerFollowUp({ targetLanguage, userTurnCount });
+    return fallback;
   }
 }
 
